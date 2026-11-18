@@ -10,7 +10,7 @@ const cv=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;r
 const tex=(c,rep)=>{const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;if(rep){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep[0],rep[1])}return t};
 
 /* ---------- settings (all driven from the control panel) ---------- */
-const cfg={openTime:3.2,spread:1,lean:0,rattle:true,wind:true,windAmt:1,vib:1,ripple:1,roam:true,speed:.95,turn:1.2,pause:2.5,radius:5,stride:1,clickWalk:true,gaze:true,gazeSpeed:1,follow:true,autoRot:false,rotSpeed:.5,blur:.07,exposure:1.08,grassWind:1,grassH:1,pickFeathers:false,headWave:1};
+const cfg={openTime:3.2,spread:1,lean:0,rattle:true,wind:true,windAmt:1,vib:1,ripple:1,roam:true,speed:.55,turn:.8,pause:2.5,radius:5,stride:1,clickWalk:true,gaze:true,gazeSpeed:1,follow:true,autoRot:false,rotSpeed:.5,blur:.07,exposure:1.08,grassWind:1,grassH:1,pickFeathers:false,headWave:1};
 /* ---------- renderer / scene ---------- */
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -54,7 +54,7 @@ const rim2=new THREE.DirectionalLight(0xffe9a8,1.1);rim2.position.set(8,5,-8);sc
 
 /* ground, contact shadow, trees (instanced) */
 /* ---------- round platform with real instanced grass (wind-swayed, parts around the bird) ---------- */
-const PR=7.2,gU={uTime:{value:0},uBird:{value:new THREE.Vector3()},uGW:{value:1}};
+const PR=18,gU={uTime:{value:0},uBird:{value:new THREE.Vector3()},uGW:{value:1}};
 {const mk=(w,h,fn)=>{const[c,g]=cv(w,h);fn(g,mul(13));return c};
  const soil=tex(mk(512,128,(g,r)=>{g.fillStyle='#4a3622';g.fillRect(0,0,512,128);for(let i=0;i<900;i++){g.fillStyle=`hsla(${22+r()*12},${25+r()*20}%,${12+r()*22}%,.55)`;g.fillRect(r()*512,r()*128,4+r()*26,1+r()*3)}for(let y=0;y<128;y+=18){g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,y,512,2)}}),[8,1]);
  const turf=tex(mk(256,256,(g,r)=>{g.fillStyle='#16300f';g.fillRect(0,0,256,256);for(let i=0;i<4000;i++){g.strokeStyle=`hsla(${85+r()*40},55%,${12+r()*16}%,.7)`;const x=r()*256,y=r()*256;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*5,y-3-r()*6);g.stroke()}}),[10,10]);
@@ -78,7 +78,7 @@ const PR=7.2,gU={uTime:{value:0},uBird:{value:new THREE.Vector3()},uGW:{value:1}
   transformed+=q*vec3(dot(wo,c0)/dot(c0,c0),dot(wo,c1)/dot(c1,c1),dot(wo,c2)/dot(c2,c2));
   transformed.y-=q*pu*.25;}`);
   sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_begin>','#include <normal_fragment_begin>\n normal=normalize(normal*.3+normalize((viewMatrix*vec4(0.,1.,0.,0.)).xyz)*.9);')};
- const cnt=innerWidth<700?32000:70000,gr=new THREE.InstancedMesh(bg,gm,cnt),mt=new THREE.Matrix4(),qq=new THREE.Quaternion(),ee=new THREE.Euler(),col=new THREE.Color(),rr=mul(77),v3=new THREE.Vector3(),sc=new THREE.Vector3();
+ const areaScale=(PR/7.2)**2,cnt=Math.round((innerWidth<700?32000:70000)*areaScale),gr=new THREE.InstancedMesh(bg,gm,cnt),mt=new THREE.Matrix4(),qq=new THREE.Quaternion(),ee=new THREE.Euler(),col=new THREE.Color(),rr=mul(77),v3=new THREE.Vector3(),sc=new THREE.Vector3();
  for(let i=0;i<cnt;i++){const a=rr()*6.2832,d=Math.sqrt(rr())*(PR-.05),h=.16+rr()*rr()*.5,w=.8+rr()*.7;
   ee.set((rr()-.5)*.25,rr()*6.2832,(rr()-.5)*.25);qq.setFromEuler(ee);mt.compose(v3.set(Math.cos(a)*d,0,Math.sin(a)*d),qq,sc.set(w,h,w));gr.setMatrixAt(i,mt);
   gr.setColorAt(i,col.setHSL(.22+rr()*.1,.5+rr()*.25,.18+rr()*.17))}
@@ -260,7 +260,7 @@ addEventListener('pointermove',e=>{gz.x=e.clientX/innerWidth*2-1;gz.y=-(e.client
 const peacock=new Peacock();
 
 /* ---------- state, framing, UI ---------- */
-let open=0,target=0,auto=false,autoT=0,windOn=true,windAmt=1,lastState='';
+let open=0,target=0,auto=true,autoT=0,windOn=true,windAmt=1,lastState='';
 const view={t:new THREE.Vector3(),d:10,time:0},tanH=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
 const fit=v=>{const a=camera.aspect,hh=lerp(2.7,3.4,v),hw=lerp(2.4,4.3,v);return Math.max(hh/tanH,hw/(tanH*a))*1.2};
 const frame=(v,time=3)=>{{const rp=peacock.root.position;view.t.set(rp.x-Math.sin(peacock.hd)*.7,lerp(1.7,2.3,v),rp.z-Math.cos(peacock.hd)*.7)}view.d=fit(v);view.time=time};
@@ -290,11 +290,12 @@ const sec=(title,rows,open=true)=>{const d=el('div','sec'),h=el('button','sh',`<
   sec('Scene',[sld('Background blur','blur',0,.4,.01),sld('Exposure','exposure',.5,1.8,.01),sld('Grass wind','grassWind',0,3,.05),sld('Grass height','grassH',.5,1.8,.05)],false),
   btn('Reset settings',null,()=>{Object.assign(cfg,DEF);refs.forEach(f=>f());applyCfg()},'wide'),
   el('div','foot','Drag to orbit · scroll to zoom<br>Wave the cursor over the head to sway the crest<br>Click the grass to send the peacock there'));
- panel.append(head,body);setOpen(innerWidth>=900);applyCfg()}
+ panel.append(head,body);setOpen(false);applyCfg()}
 function setTarget(v){target=v;frame(v)}
 function setState(){const s=open<=0&&target===0?'Closed':open>=1&&target===1?'Fully Open':target===1?'Opening':'Closing';
  if(s!==lastState){lastState=s;stTx.textContent=s;stEl.classList.toggle('moving',s==='Opening'||s==='Closing');autoT=0}}
 const setTog=(b,on)=>{b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)};
+setTog($('bAuto'),auto);
 $('bOpen').onclick=()=>{auto=false;setTog($('bAuto'),false);setTarget(1)};
 $('bClose').onclick=()=>{auto=false;setTog($('bAuto'),false);setTarget(0)};
 $('bAuto').onclick=e=>{auto=!auto;setTog(e.currentTarget,auto);autoT=0};
@@ -311,7 +312,7 @@ const gPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),gHit=new THREE.Vector3(
 cvs.addEventListener('pointerleave',()=>{if(hover)hover.hT=0;hover=null;cvs.style.cursor=''});
 cvs.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now()}});
 cvs.addEventListener('pointerup',e=>{if(!down)return;const moved=Math.hypot(e.clientX-down.x,e.clientY-down.y),dt=performance.now()-down.t;down=null;
- if(moved<6&&dt<500){setPtr(e);const f=pick();if(f){if(cfg.pickFeathers){f.kT=f.kT?0:1;f.kick(.5,.7)}}else if(cfg.clickWalk){ray.setFromCamera(ptr,camera);if(ray.ray.intersectPlane(gPlane,gHit)&&Math.hypot(gHit.x,gHit.z)<PR-1)peacock.goTo(gHit)}}});
+ if(moved<6&&dt<500){setPtr(e);const f=pick();if(f){if(cfg.pickFeathers){f.kT=f.kT?0:1;f.kick(.5,.7)}}else if(cfg.clickWalk){ray.setFromCamera(ptr,camera);if(ray.ray.intersectPlane(gPlane,gHit)&&Math.hypot(gHit.x,gHit.z)<6)peacock.goTo(gHit)}}});
 cvs.addEventListener('dblclick',e=>{setPtr(e);const f=pick();if(f&&cfg.pickFeathers){f.mesh.updateWorldMatrix(true,false);view.t.copy(f.mesh.localToWorld(new THREE.Vector3(0,f.len*.73,0)));view.d=3.4;view.time=3}});
 
 /* ---------- main loop ---------- */
