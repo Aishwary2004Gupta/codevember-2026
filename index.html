@@ -178,6 +178,17 @@
       box-shadow: 0 8px 24px rgba(13, 30, 22, .18);
     }
 
+    .project--live::after {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(5, 13, 10, .48), transparent 76%),
+        linear-gradient(0deg, rgba(5, 13, 10, .2), transparent 42%);
+      content: "";
+      pointer-events: none;
+    }
+
     .project:focus-visible {
       z-index: 1;
       outline: 2px solid var(--focus);
@@ -226,16 +237,17 @@
 
     .feather-art {
       position: absolute;
-      inset: 2% 1% 0 28%;
-      width: 70%;
+      z-index: 0;
+      inset: 0;
+      width: 100%;
       height: 100%;
-      opacity: .98;
-      transform-origin: 60% 100%;
-      transition: transform 350ms ease, opacity 350ms ease;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 350ms ease;
     }
 
     .project--live:hover .feather-art {
-      transform: translateY(-2px) scale(1.04);
+      transform: scale(1.04);
     }
 
     @media (max-width: 1180px) {
