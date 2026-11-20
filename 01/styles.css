@@ -64,14 +64,14 @@ body {
   flex: 1;
   min-width: 0;
 
-  > .gui {
+  >.gui {
     padding: 0 16px;
 
     &:not(.collapsed) {
       padding-bottom: 16px;
     }
 
-    > .gui-title {
+    >.gui-title {
       height: var(--header-size);
     }
 
@@ -131,6 +131,7 @@ canvas {
 }
 
 @media (max-width: 950px) {
+
   /* Buttons in a row at the top right, the panel full width along the bottom. */
   #main-gui {
     position: fixed;
@@ -144,7 +145,7 @@ canvas {
     gap: 6px;
     pointer-events: none;
 
-    > * {
+    >* {
       pointer-events: auto;
     }
 
@@ -214,6 +215,7 @@ canvas {
     span {
       text-box: trim-both cap alphabetic;
     }
+
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     text-decoration: none;
@@ -283,6 +285,7 @@ canvas {
 }
 
 @media (max-width: 950px) {
+
   /* Above the collapsed panel along the bottom. */
   #auto-change {
     bottom: calc(10px + var(--header-size) + 10px + env(safe-area-inset-bottom));
@@ -393,6 +396,7 @@ canvas {
   from {
     color: rgba(240, 240, 240, 0.55);
   }
+
   to {
     color: var(--loading-pill-color, rgb(240, 240, 240));
   }
@@ -454,9 +458,11 @@ canvas {
   user-select: none;
   display: none;
 }
+
 .gui.visible {
   display: block;
 }
+
 .gui.gui-light {
   --gui-bg: #f4f4f5;
   --gui-fg: #1c1c1e;
@@ -475,6 +481,7 @@ canvas {
   --gui-check: #f4f4f5;
   box-shadow: var(--shadow-panel, 0 2px 6px rgba(0, 0, 0, 0.12));
 }
+
 .gui-title,
 .gui-section-title {
   appearance: none;
@@ -488,12 +495,14 @@ canvas {
   font-family: inherit;
   color: inherit;
 }
+
 .gui-title:focus-visible,
 .gui-section-title:focus-visible,
 .gui-tab-btn:focus-visible {
   outline: 2px solid var(--gui-focus);
   outline-offset: 2px;
 }
+
 .gui-title {
   display: flex;
   flex-direction: row;
@@ -503,26 +512,32 @@ canvas {
   align-items: center;
   cursor: pointer;
 }
+
 .gui-chevron {
   display: flex;
   align-items: center;
   transition: transform 150ms ease-in-out;
 }
+
 .gui-chevron svg {
   height: 12px;
   width: 12px;
 }
-.gui.collapsed .gui-title > .gui-chevron {
+
+.gui.collapsed .gui-title>.gui-chevron {
   transform: rotate(-90deg);
 }
+
 .gui-scroller {
   max-height: var(--gui-max-height);
   overflow: auto;
   scrollbar-width: none;
 }
+
 .gui-scroller::-webkit-scrollbar {
   display: none;
 }
+
 .gui-rows {
   interpolate-size: allow-keywords;
   display: flex;
@@ -534,12 +549,14 @@ canvas {
   transition: height 100ms ease-in-out, opacity 100ms ease-in-out;
   border-top: 1px solid var(--gui-muted);
 }
+
 .gui-rows.visible {
   height: auto;
   margin-top: 12px;
   padding-top: 12px;
   opacity: 1;
 }
+
 .gui-row {
   display: flex;
   justify-content: space-between;
@@ -547,29 +564,35 @@ canvas {
   gap: var(--gui-gap);
   min-height: var(--gui-row-height);
 }
+
 .gui-row.disabled,
 .gui-section.disabled {
   pointer-events: none;
   opacity: 0.5;
 }
+
 .gui-hidden {
   display: none !important;
 }
+
 .gui-label {
   opacity: 0.8;
   flex: 1 1 auto;
   min-width: 0;
 }
+
 .gui-label.gui-randomizable {
   cursor: pointer;
   text-decoration: underline dotted transparent;
   text-underline-offset: 3px;
   transition: text-decoration-color 120ms ease-in-out, opacity 120ms ease-in-out;
 }
+
 .gui-label.gui-randomizable:hover {
   opacity: 1;
   text-decoration-color: var(--gui-muted);
 }
+
 :where(.gui) :where(input, select, button, textarea) {
   box-sizing: border-box;
   height: var(--gui-row-height);
@@ -583,12 +606,14 @@ canvas {
   line-height: 1;
   outline: none;
 }
+
 .gui input:focus,
 .gui select:focus,
 .gui textarea:focus,
 .gui button:focus-visible {
   border-color: var(--gui-focus);
 }
+
 .gui input[type=checkbox] {
   appearance: none;
   -webkit-appearance: none;
@@ -603,13 +628,16 @@ canvas {
   cursor: pointer;
   transition: background-color 90ms ease-in-out, border-color 90ms ease-in-out;
 }
+
 .gui input[type=checkbox]:hover {
   border-color: var(--gui-focus);
 }
+
 .gui input[type=checkbox]:checked {
   background: var(--gui-accent);
   border-color: var(--gui-accent);
 }
+
 .gui input[type=checkbox]::after {
   content: "";
   position: absolute;
@@ -623,10 +651,12 @@ canvas {
   opacity: 0;
   transition: opacity 90ms ease-in-out, transform 90ms ease-in-out;
 }
+
 .gui input[type=checkbox]:checked::after {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(45deg) scale(1);
 }
+
 .gui-control,
 .gui-select,
 .gui-input-text,
@@ -635,6 +665,7 @@ canvas {
   flex: 0 0 calc(100% - var(--gui-label-width));
   min-width: 0;
 }
+
 .gui-color {
   height: var(--gui-row-height);
   padding: 0;
@@ -642,16 +673,20 @@ canvas {
   appearance: none;
   -webkit-appearance: none;
 }
+
 .gui-color::-webkit-color-swatch-wrapper {
   padding: 2px;
 }
+
 .gui-color::-webkit-color-swatch {
   border: none;
   border-radius: 2px;
 }
+
 .gui-segmented {
   display: flex;
 }
+
 .gui-segment {
   flex: 1 1 0;
   min-width: 0;
@@ -664,18 +699,23 @@ canvas {
   white-space: nowrap;
   transition: background-color 90ms ease-in-out, color 90ms ease-in-out;
 }
-.gui-segment + .gui-segment {
+
+.gui-segment+.gui-segment {
   margin-left: -1px;
 }
+
 .gui-segment:first-child {
   border-radius: var(--gui-radius) 0 0 var(--gui-radius);
 }
+
 .gui-segment:last-child {
   border-radius: 0 var(--gui-radius) var(--gui-radius) 0;
 }
+
 .gui-segment:hover {
   color: var(--gui-fg);
 }
+
 .gui-segment.active {
   background: var(--gui-btn-bg);
   color: var(--gui-fg);
@@ -683,11 +723,13 @@ canvas {
   position: relative;
   z-index: 1;
 }
+
 .gui-segment:focus-visible {
   outline: 2px solid var(--gui-focus);
   outline-offset: -2px;
   z-index: 2;
 }
+
 .gui-textarea {
   height: auto;
   padding: 4px 6px;
@@ -696,52 +738,64 @@ canvas {
   line-height: 1.45;
   font-family: inherit;
 }
+
 .gui-scrubbable {
   cursor: ew-resize;
   touch-action: pan-y;
 }
+
 .gui-scrubbable:focus {
   cursor: text;
 }
+
 body.gui-scrubbing,
 body.gui-scrubbing * {
   cursor: ew-resize !important;
   user-select: none !important;
 }
+
 .gui-row.gui-row-block {
   flex-direction: column;
   align-items: stretch;
   gap: 3px;
 }
+
 .gui-block-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: var(--gui-gap);
 }
+
 .gui-graph {
   flex: 1 1 auto;
   min-width: 0;
 }
+
 .gui-graph-val {
   flex: 0 0 auto;
   text-align: right;
 }
+
 .gui-graph.gui-graph-paused {
   opacity: 0.45;
 }
+
 .gui-monitor.gui-over {
   color: var(--gui-warn);
   opacity: 1;
 }
+
 .gui-vector {
   display: flex;
   gap: 4px;
 }
+
 .gui-vector-axis {
   flex: 1 1 0;
   min-width: 0;
 }
+
 .gui-pad {
   position: relative;
   height: var(--gui-pad-height);
@@ -754,10 +808,12 @@ body.gui-scrubbing * {
     linear-gradient(var(--gui-border), var(--gui-border)) 0 50% / 100% 1px no-repeat,
     var(--gui-field-bg);
 }
+
 .gui-pad:focus-visible {
   outline: 2px solid var(--gui-focus);
   outline-offset: 2px;
 }
+
 .gui-pad-dot {
   position: absolute;
   width: var(--gui-pad-dot-size);
@@ -767,49 +823,60 @@ body.gui-scrubbing * {
   background: var(--gui-thumb);
   pointer-events: none;
 }
+
 .gui-pad:hover .gui-pad-dot {
   background: var(--gui-thumb-hover);
 }
+
 .gui-btn {
   width: 100%;
   cursor: pointer;
   background: var(--gui-btn-bg);
 }
+
 .gui-btn:hover {
   background: var(--gui-btn-hover);
 }
+
 .gui-btn:active {
   background: var(--gui-btn-active);
 }
+
 .gui-btn-group {
   display: flex;
   gap: 4px;
   flex: 1 1 auto;
   min-width: 0;
 }
+
 .gui-btn-group .gui-btn {
   flex: 1 1 0;
   width: auto;
   min-width: 0;
 }
+
 .gui-row.gui-compact {
   gap: 4px;
 }
-.gui-row.gui-compact > .gui-select,
-.gui-row.gui-compact > .gui-input-text {
+
+.gui-row.gui-compact>.gui-select,
+.gui-row.gui-compact>.gui-input-text {
   flex: 1 1 auto;
 }
+
 .gui-btn-mini {
   flex: 0 0 auto;
   width: auto;
   padding: 0 9px;
 }
+
 .gui-monitor {
   flex: 0 0 auto;
   opacity: 0.7;
   font-variant-numeric: tabular-nums;
   font-size: calc(var(--gui-font-size) - 1px);
 }
+
 .gui-slider-container {
   display: flex;
   align-items: center;
@@ -817,11 +884,13 @@ body.gui-scrubbing * {
   flex: 0 0 calc(100% - var(--gui-label-width));
   min-width: 0;
 }
+
 .gui-slider {
   flex: 1 1 auto;
   min-width: 0;
   cursor: pointer;
 }
+
 .gui-slider-val,
 .gui-slider-edit {
   flex: 0 0 auto;
@@ -832,44 +901,54 @@ body.gui-scrubbing * {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
 .gui-range-val {
   width: auto;
   min-width: 52px;
 }
+
 .gui-slider-val {
   cursor: text;
 }
+
 .gui-slider-val:hover {
   opacity: 1;
 }
+
 .gui-slider-edit {
   opacity: 1;
   padding: 2px 4px;
 }
+
 .gui-text {
   width: 100%;
   opacity: 0.75;
   line-height: 1.4;
   font-size: calc(var(--gui-font-size) - 1px);
 }
+
 .gui-text a {
   color: inherit;
 }
+
 .gui-row:has(.gui-separator) {
   min-height: 12px;
   height: 12px;
 }
+
 .gui-separator {
   background: var(--gui-muted);
   opacity: 0.5;
   height: 1px;
   width: 100%;
 }
+
 .gui-tabbar {
   display: flex;
   flex-wrap: wrap;
   gap: 3px;
 }
+
 .gui-tab-btn {
   flex: 1 1 auto;
   min-width: 46px;
@@ -882,27 +961,33 @@ body.gui-scrubbing * {
   color: var(--gui-muted);
   cursor: pointer;
 }
+
 .gui-tab-btn:hover {
   color: var(--gui-fg);
 }
+
 .gui-tab-btn.active {
   background: var(--gui-bg);
   color: var(--gui-fg);
 }
+
 .gui-tab-panel {
   display: none;
 }
+
 .gui-tab-panel.active {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .gui-section {
   interpolate-size: allow-keywords;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+
 .gui-section-title {
   display: flex;
   align-items: center;
@@ -912,19 +997,24 @@ body.gui-scrubbing * {
   letter-spacing: 0.6px;
   color: var(--gui-muted);
 }
+
 .gui-section-title.gui-collapsible {
   cursor: pointer;
 }
+
 .gui-section-title.gui-collapsible:hover {
   color: var(--gui-fg);
 }
+
 .gui-section-title .gui-chevron svg {
   height: 10px;
   width: 10px;
 }
+
 .gui-section:not(.open) .gui-section-title .gui-chevron {
   transform: rotate(-90deg);
 }
+
 .gui-section-body {
   display: flex;
   flex-direction: column;
@@ -933,10 +1023,13 @@ body.gui-scrubbing * {
   overflow: hidden;
   transition: height 120ms ease-in-out;
 }
-.gui-section:not(.open) > .gui-section-body {
+
+.gui-section:not(.open)>.gui-section-body {
   height: 0;
 }
+
 @media (prefers-reduced-motion: reduce) {
+
   .gui-rows,
   .gui-section-body,
   .gui-chevron {
