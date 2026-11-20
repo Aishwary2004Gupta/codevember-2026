@@ -1,7 +1,6 @@
 # Blender v2.80 (sub 75) OBJ File: 'Skull.blend'
 # www.blender.org
-mtllib Skull.mtl
-o Skull
+
 v -0.001004 0.102614 0.127938
 v -0.001860 0.103044 0.127131
 v -0.001154 0.102665 0.126895
