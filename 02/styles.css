@@ -111,6 +111,7 @@ canvas {
   position: absolute;
   inset: 0;
   touch-action: none;
+  z-index: 2;
 }
 
 #main-gui {
