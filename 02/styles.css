@@ -1400,7 +1400,7 @@ canvas {
 
 .shatter-word {
   position: fixed;
-  z-index: 1;
+  z-index: 3;
   left: 2.5vw;
   bottom: 6vh;
   width: min(58vw, 900px);
@@ -1484,5 +1484,245 @@ canvas {
     width: auto;
     max-height: 48vh;
     overflow-y: auto;
+  }
+}
+
+/* Shatter's own control surface; the library GUI remains only as an internal state helper. */
+.control-panel {
+  position: fixed;
+  z-index: 50;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  display: flex;
+  width: min(360px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(42, 44, 52, 0.96), rgba(17, 18, 23, 0.94));
+  color: #eceef5;
+  font: 500 12px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px) saturate(1.3);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.control-panel[hidden],
+.control-toggle[hidden] {
+  display: none;
+}
+
+.control-panel[aria-busy="true"] {
+  opacity: 0.7;
+}
+
+.control-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.control-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.control-heading strong {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+
+.control-heading span {
+  color: rgba(236, 238, 245, 0.52);
+  font-size: 11px;
+}
+
+.control-close,
+.control-toggle,
+.control-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.control-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.control-field {
+  display: grid;
+  gap: 6px;
+}
+
+.control-label {
+  color: rgba(236, 238, 245, 0.62);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.control-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 36px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 10px;
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, #b8bdc9 50%) calc(100% - 17px) 17px / 6px 6px no-repeat,
+    linear-gradient(135deg, #b8bdc9 50%, transparent 50%) calc(100% - 12px) 17px / 6px 6px no-repeat,
+    rgba(255, 255, 255, 0.055);
+  color: #f1f2f6;
+  font: inherit;
+  cursor: pointer;
+}
+
+.control-select option {
+  background: #252730;
+  color: #f1f2f6;
+}
+
+.control-select:focus-visible,
+.control-close:focus-visible,
+.control-toggle:focus-visible,
+.control-button:focus-visible,
+.control-range input:focus-visible {
+  outline: 2px solid #7be0ff;
+  outline-offset: 2px;
+}
+
+.control-settings {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-settings summary {
+  padding: 12px 0 10px;
+  color: rgba(236, 238, 245, 0.76);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.control-settings summary::-webkit-details-marker {
+  display: none;
+}
+
+.control-settings summary::after {
+  float: right;
+  color: #7be0ff;
+  content: "+";
+  font-size: 15px;
+  line-height: 10px;
+}
+
+.control-settings[open] summary::after {
+  content: "−";
+}
+
+.control-range {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  color: rgba(236, 238, 245, 0.72);
+  font-size: 11px;
+}
+
+.control-range input {
+  width: 100%;
+  margin: 0;
+  accent-color: #7be0ff;
+  cursor: pointer;
+}
+
+.control-range output {
+  color: #fff;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.control-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.control-button {
+  min-height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.control-button:hover,
+.control-close:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.control-button:active {
+  transform: scale(0.97);
+}
+
+.control-button--accent {
+  border-color: transparent;
+  background: linear-gradient(135deg, #ff8fb1, #ffb36b);
+  color: #201018;
+  font-weight: 700;
+}
+
+.control-toggle {
+  position: fixed;
+  z-index: 50;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: rgba(25, 26, 32, 0.92);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(14px);
+}
+
+@media (max-width: 640px) {
+  .control-panel {
+    top: auto;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    left: 10px;
+    width: auto;
+    max-height: min(72vh, 620px);
+  }
+
+  .control-toggle {
+    top: auto;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .shatter-word {
+    bottom: 8vh;
+    width: 92vw;
+    font-size: clamp(62px, 17vw, 118px);
   }
 }
