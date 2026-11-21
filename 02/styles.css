@@ -1398,43 +1398,6 @@ canvas {
   flex: 1 0 auto;
 }
 
-.shatter-word {
-  position: fixed;
-  z-index: 3;
-  left: 2.5vw;
-  bottom: 6vh;
-  width: min(58vw, 900px);
-  margin: 0;
-  pointer-events: none;
-  user-select: none;
-  font-family: Impact, "Arial Black", system-ui, sans-serif;
-  font-size: clamp(76px, 12vw, 190px);
-  font-weight: 900;
-  letter-spacing: -0.055em;
-  line-height: 0.68;
-  text-transform: uppercase;
-  perspective: 900px;
-  opacity: 0.82;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.12));
-}
-
-.shatter-word span {
-  display: block;
-  color: rgba(238, 240, 244, 0.82);
-  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.16);
-  clip-path: polygon(0 0, 100% 0, 96% 46%, 84% 49%, 76% 44%, 63% 51%, 51% 48%, 38% 54%, 29% 47%, 17% 52%, 0 48%);
-}
-
-.shatter-word__bottom {
-  position: absolute;
-  left: 0;
-  top: 0.47em;
-  transform-origin: center top;
-  transform: rotateX(-24deg) skewX(-7deg);
-  color: rgba(116, 130, 157, 0.58) !important;
-  clip-path: polygon(0 52%, 16% 49%, 28% 56%, 38% 50%, 51% 55%, 63% 48%, 77% 53%, 88% 46%, 100% 50%, 100% 100%, 0 100%);
-}
-
 .dk-setting {
   display: grid;
   grid-template-columns: 88px 1fr 42px;
@@ -1696,12 +1659,28 @@ canvas {
   z-index: 50;
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 10px;
-  background: rgba(25, 26, 32, 0.92);
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7be0ff, #b4f1ff);
+  color: #10202a;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 28px rgba(26, 166, 207, 0.38), 0 2px 6px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(14px);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+
+.control-toggle:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 32px rgba(26, 166, 207, 0.48), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.control-toggle:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 640px) {
@@ -1716,13 +1695,7 @@ canvas {
 
   .control-toggle {
     top: auto;
-    right: 12px;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .shatter-word {
-    bottom: 8vh;
-    width: 92vw;
-    font-size: clamp(62px, 17vw, 118px);
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   }
 }
