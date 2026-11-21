@@ -1175,3 +1175,97 @@ canvas {
     display: none;
   }
 }
+
+/* Desktop control rail: a clearer, separated panel instead of a wide bottom dock. */
+@media (min-width: 641px) {
+  .dock {
+    left: auto;
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    bottom: auto;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    transform: none;
+    width: 286px;
+    max-height: calc(100vh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    gap: 12px;
+    padding: 50px 12px 12px;
+    border-radius: 18px;
+    background:
+      linear-gradient(145deg, rgba(42, 44, 54, 0.92), rgba(14, 15, 20, 0.82));
+  }
+
+  .dock::before {
+    content: "SHATTER CONTROLS";
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    color: rgba(236, 238, 245, 0.68);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+  }
+
+  .dk-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dk-label {
+    width: 100%;
+  }
+
+  .dk-chips,
+  .dk-swatches,
+  .dk-actions,
+  .dk-segment,
+  .dk-switch {
+    max-width: 100%;
+  }
+
+  .dk-chips {
+    width: 100%;
+  }
+
+  .dk-chip {
+    padding-inline: 11px;
+  }
+
+  .dk-row:last-child {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .dk-row:last-child .dk-label {
+    display: block;
+  }
+
+  .dk-row:last-child .dk-grow {
+    display: none;
+  }
+
+  .dk-segment {
+    grid-column: 1;
+  }
+
+  .dk-actions {
+    grid-column: 2;
+  }
+
+  .dk-action {
+    width: 38px;
+    height: 38px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .dk-action span,
+  .dk-seg span {
+    display: none;
+  }
+
+  .dk-seg {
+    padding-inline: 9px;
+  }
+}
