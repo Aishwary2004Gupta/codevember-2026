@@ -6603,6 +6603,10 @@ void surface(inout Surface s) {
     surfaceBase(s);
     return;
   }
+  if (vShell < 0.5) {
+    s.alpha = 0.0;
+    return;
+  }
   s.albedo = vec3(0.0);
   s.metalness = 0.0;
   s.normal = normalize(vWorldNormal);
