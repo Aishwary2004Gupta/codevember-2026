@@ -12,6 +12,9 @@
 :root{--ink:#0f2236;--sky1:#c9dae7;--sky2:#eef0ee;--paper:#f8f5ee;--flap:#6f8ca7}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%;overflow:hidden}
+.project-home{position:fixed;z-index:10;top:calc(10px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid rgba(15,34,54,.12);border-radius:8px;background:rgba(248,245,238,.82);color:var(--ink);font:600 .78rem/1 'Bricolage Grotesque',system-ui,sans-serif;text-decoration:none;box-shadow:0 8px 24px rgba(15,34,54,.12);backdrop-filter:blur(12px)}
+.project-home svg{width:16px;height:16px;fill:currentColor}
+@media (max-width:640px){.project-home span{display:none}.project-home{width:40px;padding:0;justify-content:center}}
 body{background:linear-gradient(180deg,var(--sky1),var(--sky2) 62%,#f3efe6);color:var(--ink);font:400 1.15rem/1.55 Newsreader,Georgia,serif}
 canvas{position:fixed;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 .intro{position:fixed;z-index:3;left:3.5vw;top:5vh;max-width:25ch}
@@ -32,6 +35,7 @@ footer a{color:inherit}
 </style>
 </head>
 <body>
+<a class="project-home" href="../index.html" aria-label="Back to Codevember gallery" title="Codevember gallery"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z"/></svg><span>Codevember 2026</span></a>
 <div id="load">Unfolding…</div>
 <div class="intro">
   <p>Every plane starts as a flat sheet of paper. Watch these ones fold themselves, one crease at a time, then take off.</p>
