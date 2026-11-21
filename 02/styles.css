@@ -233,6 +233,13 @@ canvas {
   display: none;
 }
 
+/* The 02 project has no inherited gallery/header controls. */
+#info,
+.explainer,
+a.explainer {
+  display: none !important;
+}
+
 /* Auto change countdown (autoChange.js): the fill shrinks to the next change. */
 #auto-change {
   position: fixed;
@@ -1333,6 +1340,98 @@ canvas {
   gap: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--dock-line);
+}
+
+/* Collapsible Object and Surface selectors */
+.dk-dropdown {
+  border: 1px solid var(--dock-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  overflow: hidden;
+}
+
+.dk-dropdown summary {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 11px;
+  color: rgba(236, 238, 245, 0.82);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dk-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.dk-dropdown summary::after {
+  content: "+";
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.dk-dropdown[open] summary::after {
+  content: "−";
+}
+
+.dk-dropdown-row {
+  display: block;
+  padding: 0 7px 8px;
+  border: 0;
+}
+
+.dk-dropdown-row .dk-chips {
+  width: 100%;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.dk-dropdown-row .dk-chip {
+  flex: 1 0 auto;
+}
+
+.shatter-word {
+  position: fixed;
+  z-index: 1;
+  left: 2.5vw;
+  bottom: 6vh;
+  width: min(58vw, 900px);
+  margin: 0;
+  pointer-events: none;
+  user-select: none;
+  font-family: Impact, "Arial Black", system-ui, sans-serif;
+  font-size: clamp(76px, 12vw, 190px);
+  font-weight: 900;
+  letter-spacing: -0.055em;
+  line-height: 0.68;
+  text-transform: uppercase;
+  perspective: 900px;
+  opacity: 0.82;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.12));
+}
+
+.shatter-word span {
+  display: block;
+  color: rgba(238, 240, 244, 0.82);
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.16);
+  clip-path: polygon(0 0, 100% 0, 96% 46%, 84% 49%, 76% 44%, 63% 51%, 51% 48%, 38% 54%, 29% 47%, 17% 52%, 0 48%);
+}
+
+.shatter-word__bottom {
+  position: absolute;
+  left: 0;
+  top: 0.47em;
+  transform-origin: center top;
+  transform: rotateX(-24deg) skewX(-7deg);
+  color: rgba(116, 130, 157, 0.58) !important;
+  clip-path: polygon(0 52%, 16% 49%, 28% 56%, 38% 50%, 51% 55%, 63% 48%, 77% 53%, 88% 46%, 100% 50%, 100% 100%, 0 100%);
 }
 
 .dk-setting {
