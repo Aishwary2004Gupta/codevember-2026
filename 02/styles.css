@@ -1465,7 +1465,7 @@ canvas {
   padding: 16px;
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 18px;
-  background: linear-gradient(150deg, rgba(42, 44, 52, 0.96), rgba(17, 18, 23, 0.94));
+  background: linear-gradient(150deg, rgba(24, 24, 24, 0.98), rgba(0, 0, 0, 0.96));
   color: #eceef5;
   font: 500 12px/1.35 system-ui, -apple-system, "Segoe UI", sans-serif;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.06);
@@ -1509,10 +1509,13 @@ canvas {
 .control-close,
 .control-toggle,
 .control-button {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: #080808;
+  color: #fff;
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
 .control-close {
@@ -1522,7 +1525,6 @@ canvas {
   flex: 0 0 auto;
   place-items: center;
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.06);
   font-size: 18px;
   line-height: 1;
 }
@@ -1548,17 +1550,17 @@ canvas {
   border-radius: 10px;
   appearance: none;
   background:
-    linear-gradient(45deg, transparent 50%, #b8bdc9 50%) calc(100% - 17px) 17px / 6px 6px no-repeat,
-    linear-gradient(135deg, #b8bdc9 50%, transparent 50%) calc(100% - 12px) 17px / 6px 6px no-repeat,
-    rgba(255, 255, 255, 0.055);
-  color: #f1f2f6;
+    linear-gradient(45deg, transparent 50%, #fff 50%) calc(100% - 17px) 17px / 6px 6px no-repeat,
+    linear-gradient(135deg, #fff 50%, transparent 50%) calc(100% - 12px) 17px / 6px 6px no-repeat,
+    #080808;
+  color: #fff;
   font: inherit;
   cursor: pointer;
 }
 
 .control-select option {
-  background: #252730;
-  color: #f1f2f6;
+  background: #000;
+  color: #fff;
 }
 
 .control-select:focus-visible,
@@ -1566,7 +1568,7 @@ canvas {
 .control-toggle:focus-visible,
 .control-button:focus-visible,
 .control-range input:focus-visible {
-  outline: 2px solid #7be0ff;
+  outline: 2px solid #fff;
   outline-offset: 2px;
 }
 
@@ -1592,7 +1594,7 @@ canvas {
 
 .control-settings summary::after {
   float: right;
-  color: #7be0ff;
+  color: #fff;
   content: "+";
   font-size: 15px;
   line-height: 10px;
@@ -1615,7 +1617,7 @@ canvas {
 .control-range input {
   width: 100%;
   margin: 0;
-  accent-color: #7be0ff;
+  accent-color: #fff;
   cursor: pointer;
 }
 
@@ -1634,24 +1636,19 @@ canvas {
 .control-button {
   min-height: 40px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.07);
-  transition: background 150ms ease, transform 150ms ease;
 }
 
 .control-button:hover,
-.control-close:hover {
-  background: rgba(255, 255, 255, 0.14);
+.control-close:hover,
+.control-toggle:hover {
+  background: #fff;
+  color: #000;
 }
 
-.control-button:active {
+.control-button:active,
+.control-close:active,
+.control-toggle:active {
   transform: scale(0.97);
-}
-
-.control-button--accent {
-  border-color: transparent;
-  background: linear-gradient(135deg, #ff8fb1, #ffb36b);
-  color: #201018;
-  font-weight: 700;
 }
 
 .control-toggle {
@@ -1659,28 +1656,11 @@ canvas {
   z-index: 50;
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
-  min-height: 46px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #7be0ff, #b4f1ff);
-  color: #10202a;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  box-shadow: 0 8px 28px rgba(26, 166, 207, 0.38), 0 2px 6px rgba(0, 0, 0, 0.28);
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(14px);
-  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
-}
-
-.control-toggle:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 32px rgba(26, 166, 207, 0.48), 0 3px 8px rgba(0, 0, 0, 0.3);
-}
-
-.control-toggle:active {
-  transform: translateY(0);
 }
 
 @media (max-width: 640px) {
