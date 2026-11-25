@@ -1,0 +1,6 @@
+Hand model: “The Creation of Adam” by Loïc Norgeot (Sketchfab: norgeotloic).
+Source: https://sketchfab.com/3d-models/the-creation-of-adam-4d1727c7b83e4e6284bbadb63dbb537e
+Model file: https://raw.githubusercontent.com/Aishwary2004Gupta/models/cloud/creation-of-adam.glb
+License: CC-BY-4.0 — https://creativecommons.org/licenses/by/4.0/
+
+This project uses the “export_0” hand only; the second hand is omitted.
