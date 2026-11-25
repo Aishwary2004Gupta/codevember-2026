@@ -1,28 +1,20 @@
 import * as THREE from "three";
-import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const canvas = document.querySelector("#scene");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.18;
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMappingExposure = 1.25;
 
-const pmrem = new THREE.PMREMGenerator(renderer);
-const room = new RoomEnvironment();
 const scene = new THREE.Scene();
-scene.environment = pmrem.fromScene(room, 0.04).texture;
-pmrem.dispose();
-scene.background = new THREE.Color(0x155d60);
-scene.fog = new THREE.Fog(0x155d60, 17, 38);
-const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 80);
-const cameraTarget = new THREE.Vector3(-0.5, 2.55, 0);
-let cameraRadius = 10.6;
-let cameraAzimuth = 0.52;
-let cameraPolar = 1.13;
+scene.background = new THREE.Color(0x000000);
+const camera = new THREE.PerspectiveCamera(28, window.innerWidth / window.innerHeight, 0.1, 80);
+const cameraTarget = new THREE.Vector3(-0.12, 0.58, 0);
+let cameraRadius = 10.1;
+let cameraAzimuth = 0.12;
+let cameraPolar = 1.48;
 
 function placeCamera() {
   camera.position.setFromSpherical(new THREE.Spherical(cameraRadius, cameraPolar, cameraAzimuth)).add(cameraTarget);
@@ -30,280 +22,163 @@ function placeCamera() {
 }
 placeCamera();
 
-scene.add(new THREE.HemisphereLight(0xe2eee1, 0x123f42, 2.0));
-const keyLight = new THREE.DirectionalLight(0xffe8c5, 4.3);
-keyLight.position.set(-4.5, 9, 5.5);
-keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(2048, 2048);
-keyLight.shadow.camera.left = -7;
-keyLight.shadow.camera.right = 7;
-keyLight.shadow.camera.top = 8;
-keyLight.shadow.camera.bottom = -7;
-keyLight.shadow.bias = -0.0002;
-scene.add(keyLight);
-const fillLight = new THREE.DirectionalLight(0xb4e4e1, 2.0);
-fillLight.position.set(5, 4, -5);
-scene.add(fillLight);
-const rimLight = new THREE.PointLight(0xf0c88c, 35, 12, 2);
-rimLight.position.set(2.8, 4.3, 3.2);
-scene.add(rimLight);
-const skyBounce = new THREE.PointLight(0x75d4cb, 18, 15, 2);
-skyBounce.position.set(-4, 2, -4);
-scene.add(skyBounce);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x000000, 1.2));
+const key = new THREE.DirectionalLight(0xffffff, 4.6);
+key.position.set(-3.5, 6.5, 7);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xffffff, 2.5);
+rim.position.set(4, 2.5, -4);
+scene.add(rim);
+const front = new THREE.PointLight(0xffffff, 70, 20, 2);
+front.position.set(0.5, 2.8, 5.5);
+scene.add(front);
 
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
-  new THREE.MeshStandardMaterial({ color: 0x175e61, roughness: 0.82, metalness: 0.02 }),
-);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -0.025;
-floor.receiveShadow = true;
-scene.add(floor);
+const handGroup = new THREE.Group();
+scene.add(handGroup);
+const blackSkin = new THREE.MeshPhysicalMaterial({ color: 0x000000, metalness: 0.16, roughness: 0.34, clearcoat: 0.75, clearcoatRoughness: 0.26, side: THREE.DoubleSide });
+const blackInk = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const whiteInk = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const whiteLine = new THREE.LineBasicMaterial({ color: 0xffffff });
 
-let randomSeed = 18018;
-function random() {
-  randomSeed = randomSeed * 16807 % 2147483647;
-  return (randomSeed - 1) / 2147483646;
+const palmShape = new THREE.Shape();
+palmShape.moveTo(-3.32, 1.08);
+palmShape.bezierCurveTo(-3.04, 0.91, -2.58, 0.89, -2.13, 1.00);
+palmShape.bezierCurveTo(-1.65, 1.13, -1.22, 1.06, -0.79, 1.09);
+palmShape.bezierCurveTo(-0.42, 1.12, -0.16, 1.35, -0.12, 1.68);
+palmShape.lineTo(-0.36, 2.36);
+palmShape.bezierCurveTo(-0.47, 2.66, -0.23, 2.91, 0.08, 2.91);
+palmShape.bezierCurveTo(0.41, 2.91, 0.54, 2.62, 0.57, 2.33);
+palmShape.bezierCurveTo(0.83, 2.52, 1.14, 2.51, 1.35, 2.33);
+palmShape.bezierCurveTo(1.58, 2.13, 1.33, 1.91, 1.14, 1.76);
+palmShape.bezierCurveTo(1.45, 1.91, 1.74, 1.81, 1.85, 1.61);
+palmShape.bezierCurveTo(1.96, 1.39, 1.68, 1.23, 1.46, 1.20);
+palmShape.bezierCurveTo(1.61, 1.02, 1.44, 0.78, 1.18, 0.68);
+palmShape.bezierCurveTo(0.85, 0.54, 0.55, 0.68, 0.33, 0.88);
+palmShape.bezierCurveTo(0.03, 1.05, -0.23, 1.03, -0.51, 0.97);
+palmShape.bezierCurveTo(-0.91, 0.84, -1.27, 0.86, -1.68, 0.83);
+palmShape.bezierCurveTo(-2.22, 0.75, -2.83, 0.77, -3.32, 0.94);
+palmShape.closePath();
+
+const palmGeometry = new THREE.ExtrudeGeometry(palmShape, { depth: 0.34, bevelEnabled: false, curveSegments: 24 });
+palmGeometry.translate(0, 0, -0.18);
+const palm = new THREE.Mesh(palmGeometry, blackSkin);
+palm.castShadow = true;
+palm.receiveShadow = true;
+handGroup.add(palm);
+
+const palmEdges = new THREE.LineSegments(new THREE.EdgesGeometry(palmGeometry, 12), whiteLine);
+handGroup.add(palmEdges);
+const palmFront = palmShape.getPoints(140).map((point) => new THREE.Vector3(point.x, point.y, 0.172));
+handGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(palmFront), whiteLine));
+const palmBack = palmShape.getPoints(140).map((point) => new THREE.Vector3(point.x, point.y, -0.182));
+handGroup.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(palmBack), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })));
+
+function curveFrom(points) {
+  return new THREE.CatmullRomCurve3(points.map(([x, y, z = 0.08]) => new THREE.Vector3(x, y, z)), false, "centripetal");
 }
 
-function makeTerrazzoTexture() {
-  const size = 1024;
-  const canvasTextureSource = document.createElement("canvas");
-  canvasTextureSource.width = size;
-  canvasTextureSource.height = size;
-  const context = canvasTextureSource.getContext("2d");
-  context.fillStyle = "#e3dfd4";
-  context.fillRect(0, 0, size, size);
-  const chips = ["#6f706a", "#9b9487", "#4d5554", "#b7ad9d", "#777d78", "#d0c7b8"];
-  for (let i = 0; i < 2100; i++) {
-    const x = random() * size;
-    const y = random() * size;
-    const radius = 0.55 + random() * 2.45;
-    context.globalAlpha = 0.43 + random() * 0.42;
-    context.fillStyle = chips[Math.floor(random() * chips.length)];
-    context.beginPath();
-    context.ellipse(x, y, radius * (0.55 + random()), radius * (0.45 + random() * 0.9), random() * Math.PI, 0, Math.PI * 2);
-    context.fill();
+function addFinger(name, points, radius) {
+  const curve = curveFrom(points);
+  const outline = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, radius, 14, false), whiteInk);
+  const coreCurve = curveFrom(points.map(([x, y, z = 0.08]) => [x, y, z + 0.034]));
+  const core = new THREE.Mesh(new THREE.TubeGeometry(coreCurve, 48, radius * 0.77, 14, false), blackInk);
+  outline.name = `${name} white contour`;
+  core.name = `${name} black volume`;
+  outline.castShadow = true;
+  core.castShadow = true;
+  handGroup.add(outline, core);
+
+  for (let i = 1; i < points.length - 1; i += 2) {
+    const [x, y, z = 0.08] = points[i];
+    const joint = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.74, 18, 14), blackSkin);
+    joint.position.set(x, y, z + 0.042);
+    joint.castShadow = true;
+    handGroup.add(joint);
+    const jointRing = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.76, 0.007, 6, 28), whiteInk);
+    jointRing.position.set(x, y, z + 0.105);
+    handGroup.add(jointRing);
   }
-  context.globalAlpha = 1;
-  const texture = new THREE.CanvasTexture(canvasTextureSource);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  return texture;
 }
 
-function makeAnnulusGeometry(outerRadius, innerRadius, depth, bevel = 0) {
-  const shape = new THREE.Shape();
-  shape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
-  const hole = new THREE.Path();
-  hole.absarc(0, 0, innerRadius, 0, Math.PI * 2, true);
-  shape.holes.push(hole);
-  const geometry = new THREE.ExtrudeGeometry(shape, {
-    depth,
-    bevelEnabled: bevel > 0,
-    bevelThickness: bevel,
-    bevelSize: bevel,
-    bevelSegments: 4,
-    steps: 1,
-    curveSegments: 128,
-  });
-  geometry.rotateX(-Math.PI / 2);
-  geometry.computeVertexNormals();
-  return geometry;
+addFinger("index", [
+  [-0.38, 2.35, 0.10], [-0.05, 2.56, 0.12], [0.48, 2.63, 0.13], [1.00, 2.56, 0.16], [1.50, 2.39, 0.18], [1.75, 2.22, 0.19],
+], 0.108);
+addFinger("middle", [
+  [-0.32, 2.08, 0.10], [0.12, 2.19, 0.12], [0.69, 2.15, 0.14], [1.22, 1.99, 0.17], [1.63, 1.76, 0.20], [1.69, 1.58, 0.23],
+], 0.119);
+addFinger("ring", [
+  [-0.29, 1.84, 0.09], [0.18, 1.86, 0.11], [0.68, 1.69, 0.14], [1.12, 1.45, 0.18], [1.42, 1.20, 0.20], [1.39, 1.05, 0.22],
+], 0.108);
+addFinger("little", [
+  [-0.30, 1.59, 0.08], [0.09, 1.52, 0.10], [0.48, 1.31, 0.12], [0.84, 1.06, 0.15], [1.05, 0.84, 0.18], [1.00, 0.70, 0.19],
+], 0.092);
+addFinger("thumb", [
+  [-0.22, 1.29, 0.12], [0.10, 1.05, 0.15], [0.52, 0.99, 0.18], [0.94, 1.16, 0.21], [1.33, 1.42, 0.25], [1.63, 1.56, 0.29],
+], 0.132);
+
+function addCrease(points, radius = 0.008) {
+  const curve = curveFrom(points.map(([x, y]) => [x, y, 0.225]));
+  const crease = new THREE.Mesh(new THREE.TubeGeometry(curve, 36, radius, 8, false), whiteInk);
+  handGroup.add(crease);
 }
+addCrease([[-0.47, 1.38], [-0.03, 1.51], [0.37, 1.61], [0.74, 1.64]], 0.009);
+addCrease([[-0.42, 1.72], [-0.02, 1.82], [0.34, 1.86], [0.68, 1.82]], 0.008);
+addCrease([[-1.3, 1.09], [-1.08, 1.47], [-0.99, 1.91], [-1.15, 2.29]], 0.008);
 
-const terrazzo = makeTerrazzoTexture();
-const stoneMaterial = new THREE.MeshStandardMaterial({ map: terrazzo, color: 0xf0ede3, roughness: 0.77, metalness: 0.015 });
-const baseMaterial = new THREE.MeshStandardMaterial({ color: 0x344d4b, metalness: 0.62, roughness: 0.34 });
-const brassMaterial = new THREE.MeshStandardMaterial({ color: 0xb89962, metalness: 0.84, roughness: 0.19, envMapIntensity: 1.45 });
+const anchor = new THREE.Vector3(1.67, 1.61, 0.38);
+const knot = new THREE.Mesh(new THREE.SphereGeometry(0.064, 28, 20), blackSkin);
+knot.position.copy(anchor);
+handGroup.add(knot);
+const knotOutline = new THREE.Mesh(new THREE.TorusGeometry(0.066, 0.009, 8, 36), whiteInk);
+knotOutline.position.copy(anchor);
+handGroup.add(knotOutline);
 
-// A low, stationary bearing holds the revolving terrazzo platter above the floor.
-const bearing = new THREE.Mesh(makeAnnulusGeometry(2.38, 0.48, 0.25), baseMaterial);
-bearing.position.y = 0.43;
-bearing.castShadow = true;
-bearing.receiveShadow = true;
-scene.add(bearing);
-const bearingLip = new THREE.Mesh(new THREE.TorusGeometry(2.27, 0.026, 10, 144), brassMaterial);
-bearingLip.rotation.x = Math.PI / 2;
-bearingLip.position.y = 0.69;
-scene.add(bearingLip);
+const pendulum = new THREE.Group();
+scene.add(pendulum);
+const ballMaterial = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0.12, roughness: 0.24, clearcoat: 0.9, clearcoatRoughness: 0.12 });
+const ball = new THREE.Mesh(new THREE.SphereGeometry(0.235, 64, 48), ballMaterial);
+ball.castShadow = true;
+ball.receiveShadow = true;
+pendulum.add(ball);
+const ballEquator = new THREE.Mesh(new THREE.TorusGeometry(0.237, 0.008, 8, 64), blackInk);
+ballEquator.rotation.x = Math.PI / 2;
+pendulum.add(ballEquator);
+const ballCap = new THREE.Mesh(new THREE.SphereGeometry(0.045, 24, 18), blackInk);
+ballCap.position.y = 0.226;
+pendulum.add(ballCap);
 
-const feetMaterial = new THREE.MeshStandardMaterial({ color: 0xd7d2c6, roughness: 0.82, metalness: 0.01, map: terrazzo });
-for (let i = 0; i < 4; i++) {
-  const angle = Math.PI / 4 + i * Math.PI / 2;
-  const foot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 32, 24), feetMaterial);
-  foot.position.set(Math.cos(angle) * 1.72, 0.21, Math.sin(angle) * 1.72);
-  foot.scale.set(1, 0.82, 1);
-  foot.castShadow = true;
-  foot.receiveShadow = true;
-  scene.add(foot);
-}
-
-const turntable = new THREE.Group();
-turntable.name = "Harmonic ring platter";
-scene.add(turntable);
-const platterDepth = 0.54;
-const platterTop = 0.74 + platterDepth + 0.035;
-const platter = new THREE.Mesh(makeAnnulusGeometry(2.46, 0.5, platterDepth, 0.035), stoneMaterial);
-platter.position.y = 0.74;
-platter.castShadow = true;
-platter.receiveShadow = true;
-turntable.add(platter);
-
-function addHorizontalTrim(radius, tube, material, y) {
-  const trim = new THREE.Mesh(new THREE.TorusGeometry(radius, tube, 10, 160), material);
-  trim.rotation.x = Math.PI / 2;
-  trim.position.y = y;
-  turntable.add(trim);
-  return trim;
-}
-addHorizontalTrim(2.42, 0.018, brassMaterial, platterTop - 0.015);
-addHorizontalTrim(0.51, 0.023, brassMaterial, platterTop - 0.01);
-addHorizontalTrim(2.31, 0.006, new THREE.MeshBasicMaterial({ color: 0xf0d49b, transparent: true, opacity: 0.7 }), platterTop - 0.02);
-
-// The engraved channel is the exact closed path followed by the pendulum.
-const pathRadiusX = 1.22;
-const pathRadiusZ = 0.83;
-const pathSegments = 360;
-const grooveAcross = 6;
-function trackPoint(u) {
-  return { x: pathRadiusX * Math.cos(u), z: pathRadiusZ * Math.sin(u) };
-}
-function createGrooveGeometry() {
-  const positions = [];
-  const indices = [];
-  for (let i = 0; i <= pathSegments; i++) {
-    const u = i / pathSegments * Math.PI * 2;
-    const point = trackPoint(u);
-    const tangentX = -pathRadiusX * Math.sin(u);
-    const tangentZ = pathRadiusZ * Math.cos(u);
-    const tangentLength = Math.hypot(tangentX, tangentZ);
-    const normalX = tangentZ / tangentLength;
-    const normalZ = -tangentX / tangentLength;
-    for (let j = 0; j < grooveAcross; j++) {
-      const across = j / (grooveAcross - 1) * 2 - 1;
-      const depth = 0.035 * (1 - Math.abs(across));
-      positions.push(
-        point.x + normalX * across * 0.105,
-        platterTop - depth + 0.002,
-        point.z + normalZ * across * 0.105,
-      );
-      if (i < pathSegments && j < grooveAcross - 1) {
-        const a = i * grooveAcross + j;
-        const b = a + grooveAcross;
-        indices.push(a, b, a + 1, b, b + 1, a + 1);
-      }
-    }
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-const groove = new THREE.Mesh(
-  createGrooveGeometry(),
-  new THREE.MeshStandardMaterial({ color: 0x343b38, metalness: 0.28, roughness: 0.37, side: THREE.DoubleSide }),
+const string = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.008, 0.011, 1, 10),
+  new THREE.MeshBasicMaterial({ color: 0xffffff }),
 );
-turntable.add(groove);
-
-// A moving inlay makes the slow platter rotation easy to read at a glance.
-const platterMarker = new THREE.Mesh(new THREE.SphereGeometry(0.048, 24, 18), brassMaterial);
-platterMarker.position.set(2.25, platterTop + 0.022, 0);
-platterMarker.castShadow = true;
-turntable.add(platterMarker);
-const markerFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.04, 12), brassMaterial);
-markerFoot.position.set(2.25, platterTop + 0.002, 0);
-turntable.add(markerFoot);
-
-// A soft highlight travels just behind the polished bob along the engraved loop.
-const afterimageCount = 64;
-const afterimageGeometry = new THREE.BufferGeometry();
-const afterimagePositions = new Float32Array(afterimageCount * 3);
-afterimageGeometry.setAttribute("position", new THREE.BufferAttribute(afterimagePositions, 3).setUsage(THREE.DynamicDrawUsage));
-afterimageGeometry.setDrawRange(0, afterimageCount);
-const afterimageMaterial = new THREE.LineBasicMaterial({ color: 0xf0e5b8, transparent: true, opacity: 0.48, depthWrite: false });
-const afterimage = new THREE.Line(afterimageGeometry, afterimageMaterial);
-afterimage.frustumCulled = false;
-turntable.add(afterimage);
-
-// The pendulum has a fixed string length and two sinusoidal horizontal components.
-const pendulumPivot = new THREE.Vector3(0, 5.08, 0);
-const pendulumLength = 3.48;
-const swingPeriod = 4.6;
-const ringRatio = 8;
-const bob = new THREE.Group();
-scene.add(bob);
-const bobShell = new THREE.Mesh(
-  new THREE.SphereGeometry(0.225, 64, 48),
-  new THREE.MeshPhysicalMaterial({ color: 0x68716e, metalness: 0.96, roughness: 0.105, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 2.0 }),
-);
-bobShell.castShadow = true;
-bobShell.receiveShadow = true;
-bob.add(bobShell);
-const bobBand = new THREE.Mesh(new THREE.TorusGeometry(0.226, 0.009, 8, 64), brassMaterial);
-bobBand.rotation.x = Math.PI / 2;
-bob.add(bobBand);
-const bobCap = new THREE.Mesh(new THREE.SphereGeometry(0.05, 24, 16), brassMaterial);
-bobCap.position.y = 0.218;
-bob.add(bobCap);
-const bobLight = new THREE.PointLight(0xffd9a0, 1.15, 2.6, 2);
-bob.add(bobLight);
-
-const pivot = new THREE.Mesh(new THREE.SphereGeometry(0.065, 32, 24), brassMaterial);
-pivot.position.copy(pendulumPivot);
-pivot.castShadow = true;
-scene.add(pivot);
-const pivotLoop = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.009, 8, 48), new THREE.MeshBasicMaterial({ color: 0xe8d4a7, transparent: true, opacity: 0.7 }));
-pivotLoop.position.copy(pendulumPivot);
-pivotLoop.rotation.x = Math.PI / 2;
-scene.add(pivotLoop);
-const filament = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.006, 0.009, 1, 10),
-  new THREE.MeshStandardMaterial({ color: 0xd8d1bd, metalness: 0.68, roughness: 0.28 }),
-);
-filament.castShadow = true;
-scene.add(filament);
-
-const up = new THREE.Vector3(0, 1, 0);
-const ringAxis = new THREE.Vector3(0, 1, 0);
+scene.add(string);
+const stringHighlight = new THREE.Line(new THREE.BufferGeometry().setFromPoints([anchor, anchor]), whiteLine);
+scene.add(stringHighlight);
+const axis = new THREE.Vector3(0, 1, 0);
+const pendulumLength = 3.35;
+const swingPeriod = 14.5;
 let elapsed = 0;
 let running = true;
 
 function updatePendulum(phase) {
-  const ringPhase = phase / ringRatio;
-  const pathPhase = phase - ringPhase;
-  const local = trackPoint(pathPhase);
-  const horizontal = new THREE.Vector3(local.x, 0, local.z).applyAxisAngle(ringAxis, ringPhase);
-  const horizontalRadiusSq = local.x * local.x + local.z * local.z;
-  const verticalDrop = Math.sqrt(Math.max(0.1, pendulumLength * pendulumLength - horizontalRadiusSq));
-  const position = new THREE.Vector3(horizontal.x, pendulumPivot.y - verticalDrop, horizontal.z);
+  const swingAngle = 0.5 * Math.sin(phase);
+  const swingPlane = 0.16 * Math.sin(phase + 0.7);
+  const horizontal = pendulumLength * Math.sin(swingAngle);
+  const bobPosition = new THREE.Vector3(
+    anchor.x + horizontal * Math.cos(swingPlane),
+    anchor.y - pendulumLength * Math.cos(swingAngle),
+    anchor.z + horizontal * Math.sin(swingPlane),
+  );
+  pendulum.position.copy(bobPosition);
+  pendulum.rotation.set(0.08 * Math.sin(phase), 0.09 * Math.cos(phase), -swingAngle * 0.08);
 
-  bob.position.copy(position);
-  bob.rotation.set(0.18 * Math.sin(phase), 0.12 * Math.cos(phase), Math.atan2(horizontal.x, horizontal.z) * 0.06);
-  const rodVector = position.clone().sub(pendulumPivot);
-  filament.position.copy(pendulumPivot).add(position).multiplyScalar(0.5);
-  filament.quaternion.setFromUnitVectors(up, rodVector.clone().normalize());
-  filament.scale.set(1, rodVector.length(), 1);
-
-  turntable.rotation.y = ringPhase;
-  for (let i = 0; i < afterimageCount; i++) {
-    const u = pathPhase - (afterimageCount - 1 - i) * 0.009;
-    const point = trackPoint(u);
-    afterimagePositions[i * 3] = point.x;
-    afterimagePositions[i * 3 + 1] = platterTop + 0.008;
-    afterimagePositions[i * 3 + 2] = point.z;
-  }
-  afterimageGeometry.attributes.position.needsUpdate = true;
+  const direction = bobPosition.clone().sub(anchor);
+  string.position.copy(anchor).add(bobPosition).multiplyScalar(0.5);
+  string.quaternion.setFromUnitVectors(axis, direction.clone().normalize());
+  string.scale.set(1, direction.length() - 0.22, 1);
+  const stringEnd = bobPosition.clone().add(direction.clone().normalize().multiplyScalar(0.22));
+  stringHighlight.geometry.setFromPoints([anchor, stringEnd]);
 }
-
-const toggle = document.querySelector("#motionToggle");
-toggle.addEventListener("click", () => {
-  running = !running;
-  document.body.classList.toggle("is-paused", !running);
-  toggle.setAttribute("aria-label", running ? "Pause animation" : "Resume animation");
-  document.querySelector("#toggleLabel").textContent = running ? "PAUSE" : "RESUME";
-});
 
 let dragging = false;
 let lastX = 0;
@@ -316,30 +191,34 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 canvas.addEventListener("pointermove", (event) => {
   if (!dragging) return;
-  const dx = event.clientX - lastX;
-  const dy = event.clientY - lastY;
+  cameraAzimuth -= (event.clientX - lastX) * 0.005;
+  cameraPolar = THREE.MathUtils.clamp(cameraPolar + (event.clientY - lastY) * 0.004, 0.8, 1.58);
   lastX = event.clientX;
   lastY = event.clientY;
-  cameraAzimuth -= dx * 0.005;
-  cameraPolar = THREE.MathUtils.clamp(cameraPolar + dy * 0.004, 0.7, 1.42);
   placeCamera();
 });
 canvas.addEventListener("pointerup", () => { dragging = false; });
 canvas.addEventListener("pointercancel", () => { dragging = false; });
 canvas.addEventListener("wheel", (event) => {
-  cameraRadius = THREE.MathUtils.clamp(cameraRadius + event.deltaY * 0.006, 7.3, 16);
+  cameraRadius = THREE.MathUtils.clamp(cameraRadius + event.deltaY * 0.006, 7.5, 26);
   placeCamera();
 }, { passive: true });
+window.addEventListener("keydown", (event) => {
+  if (event.code !== "Space" || event.repeat) return;
+  event.preventDefault();
+  running = !running;
+});
 
 function resize() {
-  const mobile = window.innerWidth < 760;
+  const aspect = window.innerWidth / window.innerHeight;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.fov = mobile ? 37 : 34;
-  cameraTarget.set(mobile ? 0 : -0.5, mobile ? 2.4 : 2.55, 0);
-  if (mobile && cameraRadius < 12) cameraRadius = 12.5;
-  if (!mobile && cameraRadius > 12.5) cameraRadius = 10.6;
+  camera.aspect = aspect;
+  const objectHeight = 4.75;
+  const objectWidth = 6.7;
+  const fitHeight = objectHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  const fitWidth = objectWidth / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * aspect);
+  cameraRadius = Math.max(fitHeight, fitWidth) * 1.12;
   camera.updateProjectionMatrix();
   placeCamera();
 }
@@ -355,5 +234,4 @@ function animate() {
   updatePendulum(phase);
   renderer.render(scene, camera);
 }
-
 animate();
