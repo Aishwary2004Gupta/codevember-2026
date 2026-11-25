@@ -160,13 +160,13 @@ scene.add(ringAssembly);
 const movingRing = new THREE.Group();
 ringAssembly.add(movingRing);
 const ringRim = new THREE.Mesh(
-  new THREE.TorusGeometry(1.2, 0.023, 12, 128),
+  new THREE.TorusGeometry(1.38, 0.023, 12, 128),
   new THREE.MeshStandardMaterial({ color: 0xa9c99a, metalness: 0.7, roughness: 0.2, emissive: 0x274c35, emissiveIntensity: 0.35 }),
 );
 ringRim.castShadow = true;
 movingRing.add(ringRim);
 const ringInner = new THREE.Mesh(
-  new THREE.TorusGeometry(1.15, 0.006, 6, 128),
+  new THREE.TorusGeometry(1.32, 0.006, 6, 128),
   new THREE.MeshBasicMaterial({ color: 0xe1f4b1, transparent: true, opacity: 0.55 }),
 );
 movingRing.add(ringInner);
@@ -177,7 +177,7 @@ for (let i = 0; i < 8; i++) {
   const angle = i / 8 * Math.PI * 2;
   const markerSize = i === 0 ? 0.046 : i % 2 === 0 ? 0.032 : 0.019;
   const marker = new THREE.Mesh(new THREE.SphereGeometry(markerSize, 16, 12), markerMaterial);
-  marker.position.set(Math.cos(angle) * 1.2, Math.sin(angle) * 1.2, 0);
+  marker.position.set(Math.cos(angle) * 1.38, Math.sin(angle) * 1.38, 0);
   ringMarkers.add(marker);
 }
 const ringSpark = new THREE.PointLight(0xb7f08b, 1.7, 3.3, 2);
@@ -207,7 +207,7 @@ function updateHarmonicMotion() {
     pendulumPivot.z + 0.1 * Math.sin(ringPhase),
   );
   movingRing.rotation.set(0.38 * Math.sin(ringPhase), ringPhase, 0.34 * (1 - Math.cos(ringPhase)));
-  ringSpark.position.set(1.2 * Math.cos(ringPhase), 1.2 * Math.sin(ringPhase), 0.04);
+  ringSpark.position.set(1.38 * Math.cos(ringPhase), 1.38 * Math.sin(ringPhase), 0.04);
 }
 
 const modelStatus = document.querySelector("#liveLabel");
