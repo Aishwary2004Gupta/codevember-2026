@@ -336,7 +336,10 @@ function loadMechanism(gltf) {
     action.setLoop(THREE.LoopRepeat, Infinity);
     action.play();
     phaseInput.max = Math.max(0.1, animationClip.duration - 0.1).toFixed(1);
+    harmonicTime = 0;
     mixer.setTime(0);
+    updateHarmonicMotion();
+    clearTrail();
   }
   modelStatus.textContent = running ? "LIVE MECHANISM" : "MECHANISM PAUSED";
   document.querySelector("#presetDescription").textContent = profiles[selectedPreset].description;
