@@ -81,7 +81,6 @@ fitGroup.name = "mechanism-display";
 scene.add(fitGroup);
 let mixer = null;
 let running = true;
-let fitted = false;
 
 function setMetalFinish(root) {
   root.traverse((object) => {
@@ -141,7 +140,6 @@ function fitModel(root) {
     -center.z * scale,
   );
   fitGroup.add(root);
-  fitted = true;
   resize();
 }
 
