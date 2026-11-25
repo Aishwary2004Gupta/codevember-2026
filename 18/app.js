@@ -14,19 +14,24 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.08;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x020609);
+scene.fog = new THREE.Fog(0x020609, 28, 72);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 pmrem.dispose();
 
-const camera = new THREE.PerspectiveCamera(28, window.innerWidth / window.innerHeight, 0.1, 100);
-const cameraTarget = new THREE.Vector3(0, -0.8, 0);
+const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 140);
+const cameraTarget = new THREE.Vector3(0, 0.72, 0);
 let cameraRadius = 18;
-let cameraAzimuth = 0.08;
-let cameraPolar = 1.48;
+let cameraAzimuth = 0.42;
+let cameraPolar = 1.34;
+let modelWidth = 5.2;
+let modelHeight = 8;
 
 function placeCamera() {
   camera.position
@@ -36,305 +41,135 @@ function placeCamera() {
 }
 placeCamera();
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x101010, 1.35));
+scene.add(new THREE.HemisphereLight(0xe6f0ff, 0x15191d, 1.45));
 
-const keyLight = new THREE.DirectionalLight(0xffffff, 3.25);
-keyLight.position.set(-4, 7, 8);
+const keyLight = new THREE.DirectionalLight(0xffe6b5, 5.2);
+keyLight.position.set(-7, 10, 8);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.left = -10;
+keyLight.shadow.camera.right = 10;
+keyLight.shadow.camera.top = 12;
+keyLight.shadow.camera.bottom = -10;
 scene.add(keyLight);
 
-const rimLight = new THREE.DirectionalLight(0xffffff, 2.1);
-rimLight.position.set(4, 3, -5);
+const fillLight = new THREE.DirectionalLight(0xd2e3f0, 2.2);
+fillLight.position.set(7, 5, 6);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xffcf7b, 4.1);
+rimLight.position.set(1, 8, -7);
 scene.add(rimLight);
 
-const frontLight = new THREE.PointLight(0xffffff, 30, 28, 2);
-frontLight.position.set(1, 2.5, 8);
-scene.add(frontLight);
+const baseLight = new THREE.PointLight(0xffd99b, 18, 20, 2);
+baseLight.position.set(0, 3, 6);
+scene.add(baseLight);
 
-const handRig = new THREE.Group();
-handRig.name = "single-hand-and-forearm";
-handRig.position.set(-1.5, 1.65, 0);
-scene.add(handRig);
-
-const skinMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x000000,
-  metalness: 0.015,
-  roughness: 0.46,
-  clearcoat: 0.22,
-  clearcoatRoughness: 0.34,
-  side: THREE.DoubleSide,
+const floorMaterial = new THREE.MeshStandardMaterial({
+  color: 0x111820,
+  metalness: 0.18,
+  roughness: 0.58,
 });
-const nailMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0x000000,
-  metalness: 0.025,
-  roughness: 0.33,
-  clearcoat: 0.3,
-  clearcoatRoughness: 0.25,
-  side: THREE.DoubleSide,
-});
-const outlineMaterial = new THREE.MeshBasicMaterial({
-  color: 0xffffff,
-  side: THREE.BackSide,
-  depthWrite: false,
-});
-const handTones = [skinMaterial, nailMaterial];
-const contourTones = [outlineMaterial];
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -3.29;
+floor.receiveShadow = true;
+scene.add(floor);
 
-function addHandOutline(mesh) {
-  const shell = new THREE.Mesh(mesh.geometry, outlineMaterial);
-  const position = new THREE.Vector3();
-  const quaternion = new THREE.Quaternion();
-  const scale = new THREE.Vector3();
+const fitGroup = new THREE.Group();
+fitGroup.name = "mechanism-display";
+scene.add(fitGroup);
+let mixer = null;
+let running = true;
+let fitted = false;
 
-  mesh.updateMatrix();
-  mesh.matrix.decompose(position, quaternion, scale);
-  shell.position.copy(position);
-  shell.quaternion.copy(quaternion);
-  shell.scale.copy(scale).multiplyScalar(1.018);
-  shell.name = mesh.name + "-contrast-edge";
-  shell.userData.contrastEdge = true;
-  shell.frustumCulled = mesh.frustumCulled;
-  mesh.parent.add(shell);
-}
-
-function makeForearmGeometry(expansion = 0) {
-  const ringCount = 56;
-  const radialCount = 36;
-  const positions = [];
-  const indices = [];
-
-  for (let ring = 0; ring <= ringCount; ring++) {
-    const t = ring / ringCount;
-    const eased = t * t * (3 - 2 * t);
-    const x = THREE.MathUtils.lerp(-7.35, -1.92, t);
-    const centerY = THREE.MathUtils.lerp(0.52, 0.16, eased) + 0.06 * Math.sin(Math.PI * t);
-    const radiusY = THREE.MathUtils.lerp(1.16, 0.48, eased) + expansion;
-    const radiusZ = THREE.MathUtils.lerp(0.5, 0.34, eased) + expansion;
-
-    for (let side = 0; side < radialCount; side++) {
-      const angle = (side / radialCount) * Math.PI * 2;
-      positions.push(
-        x,
-        centerY + Math.cos(angle) * radiusY,
-        Math.sin(angle) * radiusZ,
-      );
-
-      if (ring < ringCount) {
-        const current = ring * radialCount + side;
-        const next = current + radialCount;
-        const around = ring * radialCount + (side + 1) % radialCount;
-        const aroundNext = next - side + (side + 1) % radialCount;
-        indices.push(current, around, next, around, aroundNext, next);
-      }
-    }
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-const forearmOutline = new THREE.Mesh(makeForearmGeometry(0.045), outlineMaterial);
-forearmOutline.name = "forearm-contrast-edge";
-forearmOutline.userData.contrastEdge = true;
-handRig.add(forearmOutline);
-
-const forearm = new THREE.Mesh(makeForearmGeometry(), skinMaterial);
-forearm.name = "single-forearm-extension";
-forearm.castShadow = true;
-forearm.receiveShadow = true;
-handRig.add(forearm);
-
-const handBaseY = handRig.position.y;
-let anchorBase = new THREE.Vector3(1.15, 2.05, 0.02);
-
-function findTipAnchor(root) {
-  root.updateMatrixWorld(true);
-  const vertices = [];
-  let farthestX = -Infinity;
-
+function setMetalFinish(root) {
   root.traverse((object) => {
-    if (!object.isMesh || object.userData.contrastEdge) return;
-    const positions = object.geometry && object.geometry.getAttribute("position");
-    if (!positions) return;
+    if (!object.isMesh) return;
 
-    const point = new THREE.Vector3();
-    for (let index = 0; index < positions.count; index++) {
-      point.fromBufferAttribute(positions, index).applyMatrix4(object.matrixWorld);
-      vertices.push(point.clone());
-      farthestX = Math.max(farthestX, point.x);
+    const ancestry = [];
+    for (let current = object; current && current !== root.parent; current = current.parent) {
+      ancestry.push(current.name.toLowerCase());
     }
+    const names = ancestry.join(" ");
+    const isBase = names.includes("triple_pendulum_(base)") || object.name.toLowerCase().includes("base");
+    const isOuterFrame = names.includes("external_fixed_arc");
+    const isJoint = names.includes("sphere") || names.includes("pin") || names.includes("holder");
+
+    const tint = isBase
+      ? 0x172027
+      : isOuterFrame
+        ? 0xb8c3c7
+        : isJoint
+          ? 0xd0a04c
+          : 0xb88b45;
+
+    const originals = Array.isArray(object.material) ? object.material : [object.material];
+    const finishes = originals.map((original) => {
+      const material = original.clone();
+      material.color.setHex(tint);
+      material.metalness = isBase ? 0.76 : 0.86;
+      material.roughness = isBase ? 0.24 : (isJoint ? 0.2 : 0.23);
+      material.envMapIntensity = isBase ? 0.9 : 1.25;
+      if ("clearcoat" in material) {
+        material.clearcoat = isBase ? 0.55 : 0.8;
+        material.clearcoatRoughness = 0.17;
+      }
+      return material;
+    });
+
+    object.material = Array.isArray(object.material) ? finishes : finishes[0];
+    object.castShadow = true;
+    object.receiveShadow = true;
   });
-
-  if (!Number.isFinite(farthestX)) return anchorBase.clone();
-
-  const tip = new THREE.Vector3();
-  let count = 0;
-  for (const point of vertices) {
-    if (point.x < farthestX - 0.035) continue;
-    tip.add(point);
-    count++;
-  }
-
-  if (count) tip.multiplyScalar(1 / count);
-  tip.x -= 0.045;
-  tip.y -= 0.03;
-  return tip;
 }
 
-function loadSingleHand() {
+function fitModel(root) {
+  root.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(root);
+  const size = bounds.getSize(new THREE.Vector3());
+  const center = bounds.getCenter(new THREE.Vector3());
+
+  modelHeight = size.y || 1;
+  const scale = 8 / modelHeight;
+  modelWidth = Math.max(size.x * scale, 1);
+
+  fitGroup.scale.setScalar(scale);
+  fitGroup.position.set(
+    -center.x * scale,
+    -bounds.min.y * scale - 3.25,
+    -center.z * scale,
+  );
+  fitGroup.add(root);
+  fitted = true;
+  resize();
+}
+
+function loadMechanism() {
   const loader = new GLTFLoader();
   loader.load(
-    "./assets/creation-of-adam/creation-of-adam.glb",
+    "./assets/triple-pendulum/scene.gltf",
     (gltf) => {
-      gltf.scene.updateMatrixWorld(true);
-      const sourceHand = gltf.scene.getObjectByName("export_0");
-      if (!sourceHand) {
-        console.error("The one-hand model could not be found.");
-        return;
+      const root = gltf.scene;
+      root.name = "triple-pendulum-model";
+      setMetalFinish(root);
+      fitModel(root);
+
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(root);
+        const action = mixer.clipAction(gltf.animations[0]);
+        action.setLoop(THREE.LoopRepeat, Infinity);
+        action.timeScale = 0.72;
+        action.play();
       }
-
-      // Attach just the export_0 hand; leave the model's second hand out of the scene.
-      const hand = sourceHand.clone(true);
-      hand.matrix.copy(sourceHand.matrixWorld);
-      hand.matrixAutoUpdate = false;
-      hand.name = "single-hand-model";
-
-      const sourceBounds = new THREE.Box3().setFromObject(hand);
-      const sourceSize = sourceBounds.getSize(new THREE.Vector3());
-      const sourceCenter = sourceBounds.getCenter(new THREE.Vector3());
-
-      const centeredHand = new THREE.Group();
-      centeredHand.position.copy(sourceCenter).multiplyScalar(-1);
-      centeredHand.add(hand);
-
-      const fittedHand = new THREE.Group();
-      fittedHand.rotation.y = Math.PI / 2;
-      fittedHand.scale.set(
-        1.18 / Math.max(sourceSize.x, 0.001),
-        3.3 / Math.max(sourceSize.y, 0.001),
-        5.35 / Math.max(sourceSize.z, 0.001),
-      );
-      fittedHand.add(centeredHand);
-      handRig.add(fittedHand);
-
-      const meshes = [];
-      hand.traverse((object) => {
-        if (!object.isMesh) return;
-        object.material = object.name === "Object_5" ? nailMaterial : skinMaterial;
-        object.castShadow = true;
-        object.receiveShadow = true;
-        meshes.push(object);
-      });
-      for (const mesh of meshes) addHandOutline(mesh);
-
-      handRig.updateMatrixWorld(true);
-      anchorBase.copy(findTipAnchor(hand));
     },
     undefined,
     (error) => {
-      console.error("Could not load the single-hand model.", error);
+      console.error("Could not load the pendulum mechanism.", error);
     },
   );
 }
-loadSingleHand();
-
-const pendulumLength = 8.2;
-const ballRadius = 2.05;
-const ballGroup = new THREE.Group();
-ballGroup.name = "pendulum-bob";
-scene.add(ballGroup);
-
-const ballMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0xffffff,
-  metalness: 0.08,
-  roughness: 0.24,
-  clearcoat: 0.72,
-  clearcoatRoughness: 0.12,
-});
-const ball = new THREE.Mesh(new THREE.SphereGeometry(ballRadius, 72, 56), ballMaterial);
-ball.castShadow = true;
-ball.receiveShadow = true;
-ballGroup.add(ball);
-
-const stringMaterial = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
-  metalness: 0.1,
-  roughness: 0.36,
-});
-const string = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, 1, 12), stringMaterial);
-string.name = "long-pendulum-string";
-scene.add(string);
-
-const anchorFerruleMaterial = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
-  metalness: 0.18,
-  roughness: 0.28,
-});
-const anchorFerrule = new THREE.Mesh(new THREE.SphereGeometry(0.055, 24, 18), anchorFerruleMaterial);
-scene.add(anchorFerrule);
-
-const animationPeriod = 14.5;
-const maximumAngle = 1.08;
-let elapsed = 0;
-let running = true;
-
-const upAxis = new THREE.Vector3(0, 1, 0);
-const anchorWorld = new THREE.Vector3();
-const bobPosition = new THREE.Vector3();
-const bobDirection = new THREE.Vector3();
-const stringEnd = new THREE.Vector3();
-const stringVector = new THREE.Vector3();
-const ballPlane = 1.67;
-
-function setGray(material, tone) {
-  material.color.setRGB(tone, tone, tone);
-}
-
-function updateTheme(theme) {
-  const lightness = THREE.MathUtils.clamp(theme, 0, 1);
-  const opposite = 1 - lightness;
-
-  scene.background.setRGB(lightness, lightness, lightness);
-  for (const material of handTones) setGray(material, lightness);
-  for (const material of contourTones) setGray(material, opposite);
-  setGray(stringMaterial, opposite);
-  setGray(anchorFerruleMaterial, opposite);
-  setGray(ballMaterial, opposite);
-}
-
-function updateAnimation(time) {
-  const phase = (time / animationPeriod) * Math.PI * 2;
-  const theme = 0.5 - 0.5 * Math.cos(phase);
-  const lift = 0.42 * theme;
-
-  handRig.position.y = handBaseY + lift;
-  anchorWorld.copy(anchorBase);
-  anchorWorld.y += lift;
-
-  // The bob completes one smooth forward-and-return arc as the scene inverts.
-  const angle = maximumAngle * (1 - Math.cos(phase)) * 0.5;
-  const plane = ballPlane + 0.1 * Math.sin(phase);
-  const swing = pendulumLength * Math.sin(angle);
-  bobPosition.set(
-    anchorWorld.x + swing * Math.cos(plane),
-    anchorWorld.y - pendulumLength * Math.cos(angle),
-    anchorWorld.z + swing * Math.sin(plane),
-  );
-
-  ballGroup.position.copy(bobPosition);
-
-  bobDirection.copy(bobPosition).sub(anchorWorld);
-  stringEnd.copy(bobPosition).addScaledVector(bobDirection, -ballRadius / bobDirection.length());
-  stringVector.copy(stringEnd).sub(anchorWorld);
-  string.position.copy(anchorWorld).add(stringEnd).multiplyScalar(0.5);
-  string.quaternion.setFromUnitVectors(upAxis, stringVector.clone().normalize());
-  string.scale.set(1, stringVector.length(), 1);
-  anchorFerrule.position.copy(anchorWorld);
-
-  updateTheme(theme);
-}
+loadMechanism();
 
 let dragging = false;
 let lastX = 0;
@@ -349,7 +184,7 @@ canvas.addEventListener("pointerdown", (event) => {
 canvas.addEventListener("pointermove", (event) => {
   if (!dragging) return;
   cameraAzimuth -= (event.clientX - lastX) * 0.005;
-  cameraPolar = THREE.MathUtils.clamp(cameraPolar + (event.clientY - lastY) * 0.004, 0.8, 1.58);
+  cameraPolar = THREE.MathUtils.clamp(cameraPolar + (event.clientY - lastY) * 0.004, 0.78, 1.52);
   lastX = event.clientX;
   lastY = event.clientY;
   placeCamera();
@@ -357,7 +192,7 @@ canvas.addEventListener("pointermove", (event) => {
 canvas.addEventListener("pointerup", () => { dragging = false; });
 canvas.addEventListener("pointercancel", () => { dragging = false; });
 canvas.addEventListener("wheel", (event) => {
-  cameraRadius = THREE.MathUtils.clamp(cameraRadius + event.deltaY * 0.006, 10, 34);
+  cameraRadius = THREE.MathUtils.clamp(cameraRadius + event.deltaY * 0.008, 9, 38);
   placeCamera();
 }, { passive: true });
 
@@ -374,21 +209,21 @@ function resize() {
   camera.aspect = aspect;
 
   const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
-  const fitHeight = 9 / (2 * Math.tan(fovHalf));
-  const fitWidth = 12 / (2 * Math.tan(fovHalf) * aspect);
-  cameraRadius = Math.max(fitHeight, fitWidth) * 1.02;
+  const fitHeight = (modelHeight + 1.2) / (2 * Math.tan(fovHalf));
+  const fitWidth = (modelWidth + 1.0) / (2 * Math.tan(fovHalf) * aspect);
+  cameraRadius = Math.max(fitHeight, fitWidth) * 1.08;
   camera.updateProjectionMatrix();
   placeCamera();
 }
+
 window.addEventListener("resize", resize);
 resize();
 
 const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
-  const delta = Math.min(clock.getDelta(), 0.04);
-  if (running) elapsed += delta;
-  updateAnimation(elapsed);
+  const delta = Math.min(clock.getDelta(), 0.05);
+  if (running && mixer) mixer.update(delta);
   renderer.render(scene, camera);
 }
 animate();
