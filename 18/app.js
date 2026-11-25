@@ -229,7 +229,11 @@ function integrate(dt) {
   motion.phiVelocity += dt / 6 * (k1.phiVelocity + 2 * k2.phiVelocity + 2 * k3.phiVelocity + k4.phiVelocity);
   if (motion.theta < 0.025) {
     motion.theta = 0.025;
-    motion.thetaVelocity = Math.max(0, motion.thetaVelocity);
+    if (motion.thetaVelocity < 0) {
+      // Crossing the vertical axis continues the swing in the opposite azimuth.
+      motion.phi += Math.PI;
+      motion.thetaVelocity = -motion.thetaVelocity;
+    }
   } else if (motion.theta > 1.28) {
     motion.theta = 1.28;
     motion.thetaVelocity = Math.min(0, motion.thetaVelocity);
@@ -307,7 +311,7 @@ function bindRange(selector, outputSelector, setter, formatter) {
 
 bindRange("#amplitude", "#amplitudeOut", (value) => {
   params.amplitude = value;
-  if (preset !== "orbit") motion.theta = value * Math.PI / 180;
+  launchPreset(preset);
 }, (value) => `${value.toFixed(0)}°`);
 bindRange("#gravity", "#gravityOut", (value) => { params.gravity = value; }, (value) => `${value.toFixed(1)} <i>m/s²</i>`);
 bindRange("#length", "#lengthOut", (value) => { params.length = value; }, (value) => `${value.toFixed(2)} <i>m</i>`);
