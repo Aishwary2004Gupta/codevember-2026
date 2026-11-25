@@ -108,17 +108,119 @@ dustGeometry.setAttribute("position", new THREE.Float32BufferAttribute(dustPosit
 const dust = new THREE.Points(dustGeometry, new THREE.PointsMaterial({ color: 0xb7d5c5, size: 0.018, transparent: true, opacity: 0.45, sizeAttenuation: true }));
 scene.add(dust);
 
+// A separate harmonic pendulum passes through a moving, phase-locked hoop.
+let harmonicPeriod = 4.8;
+const swingAmplitude = 0.52;
+const pendulumLength = 2.12;
+const pendulumPivot = new THREE.Vector3(0, 3.29, 1.05);
+const bobRestY = pendulumPivot.y - pendulumLength;
+const pendulumRig = new THREE.Group();
+scene.add(pendulumRig);
+
+const pivotHousing = new THREE.Mesh(
+  new THREE.SphereGeometry(0.105, 32, 24),
+  new THREE.MeshStandardMaterial({ color: 0xb89d68, metalness: 0.82, roughness: 0.2, emissive: 0x33220c, emissiveIntensity: 0.18 }),
+);
+pivotHousing.position.copy(pendulumPivot);
+pivotHousing.castShadow = true;
+pendulumRig.add(pivotHousing);
+const pivotHalo = new THREE.Mesh(
+  new THREE.TorusGeometry(0.17, 0.009, 8, 48),
+  new THREE.MeshBasicMaterial({ color: 0xc2e989, transparent: true, opacity: 0.75 }),
+);
+pivotHalo.position.copy(pendulumPivot);
+pivotHalo.rotation.x = Math.PI / 2;
+pendulumRig.add(pivotHalo);
+
+const suspension = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.017, 0.024, 1, 12),
+  new THREE.MeshStandardMaterial({ color: 0xd8c28e, metalness: 0.84, roughness: 0.22 }),
+);
+suspension.castShadow = true;
+pendulumRig.add(suspension);
+const harmonicBob = new THREE.Group();
+pendulumRig.add(harmonicBob);
+const bobShell = new THREE.Mesh(
+  new THREE.SphereGeometry(0.205, 48, 36),
+  new THREE.MeshPhysicalMaterial({ color: 0x9ac5b1, metalness: 0.72, roughness: 0.16, clearcoat: 0.9, clearcoatRoughness: 0.1 }),
+);
+bobShell.castShadow = true;
+harmonicBob.add(bobShell);
+const bobEquator = new THREE.Mesh(
+  new THREE.TorusGeometry(0.208, 0.012, 8, 48),
+  new THREE.MeshStandardMaterial({ color: 0xd7b879, metalness: 0.82, roughness: 0.2, emissive: 0x33220c, emissiveIntensity: 0.16 }),
+);
+bobEquator.rotation.x = Math.PI / 2;
+harmonicBob.add(bobEquator);
+const bobGlow = new THREE.PointLight(0x83f0c6, 1.8, 2.2, 2);
+harmonicBob.add(bobGlow);
+
+const ringAssembly = new THREE.Group();
+scene.add(ringAssembly);
+const movingRing = new THREE.Group();
+ringAssembly.add(movingRing);
+const ringRim = new THREE.Mesh(
+  new THREE.TorusGeometry(1.2, 0.023, 12, 128),
+  new THREE.MeshStandardMaterial({ color: 0xa9c99a, metalness: 0.7, roughness: 0.2, emissive: 0x274c35, emissiveIntensity: 0.35 }),
+);
+ringRim.castShadow = true;
+movingRing.add(ringRim);
+const ringInner = new THREE.Mesh(
+  new THREE.TorusGeometry(1.15, 0.006, 6, 128),
+  new THREE.MeshBasicMaterial({ color: 0xe1f4b1, transparent: true, opacity: 0.55 }),
+);
+movingRing.add(ringInner);
+const ringMarkers = new THREE.Group();
+movingRing.add(ringMarkers);
+const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xe4f4bf });
+for (let i = 0; i < 8; i++) {
+  const angle = i / 8 * Math.PI * 2;
+  const markerSize = i === 0 ? 0.046 : i % 2 === 0 ? 0.032 : 0.019;
+  const marker = new THREE.Mesh(new THREE.SphereGeometry(markerSize, 16, 12), markerMaterial);
+  marker.position.set(Math.cos(angle) * 1.2, Math.sin(angle) * 1.2, 0);
+  ringMarkers.add(marker);
+}
+const ringSpark = new THREE.PointLight(0xb7f08b, 1.7, 3.3, 2);
+ringAssembly.add(ringSpark);
+
+let harmonicTime = 0;
+function updateHarmonicMotion() {
+  const phase = harmonicTime / harmonicPeriod * Math.PI * 2;
+  const angle = swingAmplitude * Math.sin(phase);
+  const bobPosition = new THREE.Vector3(
+    pendulumLength * Math.sin(angle),
+    pendulumPivot.y - pendulumLength * Math.cos(angle),
+    pendulumPivot.z,
+  );
+  harmonicBob.position.copy(bobPosition);
+  const cableVector = bobPosition.clone().sub(pendulumPivot);
+  suspension.position.copy(pendulumPivot).add(bobPosition).multiplyScalar(0.5);
+  suspension.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), cableVector.clone().normalize());
+  suspension.scale.set(1, cableVector.length(), 1);
+  harmonicBob.rotation.z = -angle * 0.12;
+
+  // The hoop completes one graceful orientation cycle for every two swings.
+  const ringPhase = phase * 0.5;
+  ringAssembly.position.set(
+    0.13 * Math.sin(ringPhase),
+    bobRestY + 0.07 * (1 - Math.cos(ringPhase)),
+    pendulumPivot.z + 0.1 * Math.sin(ringPhase),
+  );
+  movingRing.rotation.set(0.38 * Math.sin(ringPhase), ringPhase, 0.34 * (1 - Math.cos(ringPhase)));
+  ringSpark.position.set(1.2 * Math.cos(ringPhase), 1.2 * Math.sin(ringPhase), 0.04);
+}
+
 const modelStatus = document.querySelector("#liveLabel");
 const phaseInput = document.querySelector("#phaseControl");
 let mechanismRoot = null;
 let mechanism = null;
-let motionTarget = null;
+const motionTarget = harmonicBob;
 let mixer = null;
 let animationClip = null;
 let running = true;
 let playbackRate = 1;
 let selectedPreset = "natural";
-let scaleFactor = 11;
+let scaleFactor = 8.5;
 let trailOpacity = 0.68;
 let readoutClock = 0;
 let frameCount = 0;
@@ -198,9 +300,11 @@ function setRunning(value) {
 }
 
 function resetMotion() {
+  harmonicTime = 0;
   if (mixer) mixer.setTime(0);
   phaseInput.value = "0";
   clearTrail();
+  updateHarmonicMotion();
   updateReadouts(true);
 }
 
@@ -219,16 +323,15 @@ function loadMechanism(gltf) {
   mechanismRoot = new THREE.Group();
   mechanismRoot.name = "Mechanism display rig";
   mechanismRoot.scale.setScalar(scaleFactor);
-  mechanismRoot.position.set(0, 1.62, 0);
+  mechanismRoot.position.set(0, 1.3, -0.7);
   mechanismRoot.add(mechanism);
   scene.add(mechanismRoot);
 
-  motionTarget = mechanism.getObjectByName("Triple_Pendulum_(sphere)_2")
-    ?? mechanism.getObjectByName("Triple_Pendulum_(sphere)")
-    ?? mechanism;
   mixer = new THREE.AnimationMixer(mechanism);
   animationClip = gltf.animations[0] ?? null;
   if (animationClip) {
+    // Ten pendulum cycles fit exactly inside the supplied model's loop.
+    harmonicPeriod = animationClip.duration / 10;
     const action = mixer.clipAction(animationClip);
     action.setLoop(THREE.LoopRepeat, Infinity);
     action.play();
@@ -277,7 +380,9 @@ speedInput.addEventListener("input", () => {
 });
 
 phaseInput.addEventListener("input", () => {
-  if (mixer) mixer.setTime(Number(phaseInput.value));
+  harmonicTime = Number(phaseInput.value);
+  if (mixer) mixer.setTime(harmonicTime);
+  updateHarmonicMotion();
   document.querySelector("#phaseOut").innerHTML = `${Number(phaseInput.value).toFixed(1).padStart(4, "0")} <i>s</i>`;
   clearTrail();
   updateReadouts(true);
@@ -340,8 +445,10 @@ const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
   const delta = Math.min(clock.getDelta(), 0.04);
-  if (running && mixer) {
-    mixer.update(delta * playbackRate);
+  if (running) {
+    if (mixer) mixer.update(delta * playbackRate);
+    harmonicTime += delta * playbackRate;
+    updateHarmonicMotion();
     readoutClock += delta;
     if (frameCount % 2 === 0) updateTrail();
     updateReadouts();
@@ -352,5 +459,6 @@ function animate() {
 }
 
 selectProfile("natural");
+updateHarmonicMotion();
 updateReadouts(true);
 animate();
