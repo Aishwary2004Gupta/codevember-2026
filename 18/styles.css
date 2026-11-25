@@ -111,6 +111,9 @@ input[type="range"]:focus-visible { outline: 1px solid var(--acid); outline-offs
 .panel-foot { display: flex; align-items: center; gap: 7px; margin-top: 15px; color: #687674; font-size: 7px; letter-spacing: .075em; white-space: nowrap; }
 .foot-dot { width: 4px; height: 4px; background: #668d78; box-shadow: 0 0 5px rgba(140,230,197,.4); }
 .foot-separator { color: #455351; }
+.asset-credit { margin: 14px 0 0; padding-top: 11px; border-top: 1px solid rgba(214,226,218,.08); color: #687674; font-size: 8px; line-height: 1.65; }
+.asset-credit a { color: #a5b9ad; text-decoration-color: rgba(165,185,173,.35); text-underline-offset: 2px; }
+.asset-credit a:hover { color: var(--acid); }
 .readout-bar { position: fixed; right: 0; bottom: 0; left: 0; min-height: 82px; display: flex; align-items: center; gap: clamp(20px, 4vw, 60px); padding: 0 clamp(22px, 4.2vw, 64px); border-top: 1px solid rgba(211, 227, 219, .09); background: linear-gradient(0deg, rgba(7,11,14,.78), rgba(7,11,14,.3)); backdrop-filter: blur(8px); }
 .run-state { display: flex; align-items: center; gap: 11px; min-width: 150px; }
 .run-indicator { flex: 0 0 auto; width: 7px; height: 7px; }
