@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createPressureTraceScene } from "./pressure-scene.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
@@ -761,19 +762,25 @@ for (const z of [-0.18, 0.18]) {
   mechanismUpperPivot.add(bearing);
 }
 
+const pressureTrace = createPressureTraceScene(renderer);
+const pressureTraceGroup = pressureTrace.group;
+pressureTraceGroup.visible = false;
+scene.add(pressureTraceGroup);
+
 const darkFloorColor = new THREE.Color(0x10161b);
 const lightFloorColor = new THREE.Color(0x777276);
 const pendulumFloorColor = new THREE.Color(0x818a93);
-const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame, mechanicalGroup];
-const sceneKeys = ["triple", "armillary", "pendulum", "mechanical"];
+const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame, mechanicalGroup, pressureTraceGroup];
+const sceneKeys = ["triple", "armillary", "pendulum", "mechanical", "pressure"];
 const sceneLabels = [
   "An animated brass triple-pendulum mechanism on a dark display base.",
   "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
   "An animated blue, rose, and chrome pendulum sculpture.",
   "A looping gold double pendulum inside a polished arched frame.",
+  "A metal stylus tracing a deep curved channel into a thick textured blue sheet.",
 ];
-const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground, darkBackground];
-const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor, darkFloorColor];
+const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground, darkBackground, pressureTrace.background];
+const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor, darkFloorColor, pressureTrace.floorColor];
 const transitionStartBg = darkBackground.clone();
 const transitionTargetBg = darkBackground.clone();
 const transitionStartFloor = darkFloorColor.clone();
@@ -782,7 +789,17 @@ let sceneTransition = 1;
 let running = true;
 
 function showScene(index) {
+  const previousScene = activeScene;
   activeScene = ((index % sceneKeys.length) + sceneKeys.length) % sceneKeys.length;
+  if (activeScene === 4) {
+    cameraTarget.set(0, -2.18, 0);
+    cameraPolar = 0.76;
+    cameraAzimuth = 0.35;
+  } else if (previousScene === 4) {
+    cameraTarget.set(0, 0.72, 0);
+    cameraPolar = 1.34;
+    cameraAzimuth = 0.42;
+  }
   sceneGroups.forEach((group, sceneIndex) => { group.visible = sceneIndex === activeScene; });
   document.body.dataset.scene = sceneKeys[activeScene];
   canvas.style.visibility = "visible";
@@ -794,6 +811,7 @@ function showScene(index) {
   transitionTargetFloor.copy(sceneFloors[activeScene]);
   sceneTransition = 0;
   resize();
+  if (activeScene === 4) pressureTrace.update(elapsed);
 }
 nextButton.addEventListener("click", () => showScene(activeScene + 1));
 previousButton.addEventListener("click", () => showScene(activeScene - 1));
@@ -835,13 +853,15 @@ function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = aspect;
 
-  const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
+  const isPressureScene = activeScene === 4;
   const isMechanicalScene = activeScene === 3;
-  const neededHeight = isMechanicalScene ? 8.35 : Math.max(fitHeight, 8.2);
-  const neededWidth = isMechanicalScene ? 5.2 : Math.max(fitWidth, 7.2);
+  camera.fov = isPressureScene ? (aspect < 0.75 ? 43 : 38) : 30;
+  const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
+  const neededHeight = isMechanicalScene ? 8.35 : isPressureScene ? 6.8 : Math.max(fitHeight, 8.2);
+  const neededWidth = isMechanicalScene ? 5.2 : isPressureScene ? 11.7 : Math.max(fitWidth, 7.2);
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
-  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * (isMechanicalScene ? 1.04 : 1.08);
+  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
   camera.updateProjectionMatrix();
   placeCamera();
 }
@@ -886,6 +906,7 @@ function animate() {
     const mechanismPhase = THREE.MathUtils.euclideanModulo(elapsed * Math.PI / 2, Math.PI * 2);
     mechanismLowerPivot.rotation.z = -2.35 + mechanismPhase;
     mechanismWeight.rotation.y = THREE.MathUtils.euclideanModulo(elapsed * 0.16, Math.PI * 2);
+    if (activeScene === 4) pressureTrace.update(elapsed);
   }
 
   updateSceneTransition(delta);
