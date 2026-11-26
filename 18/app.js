@@ -792,9 +792,9 @@ function showScene(index) {
   const previousScene = activeScene;
   activeScene = ((index % sceneKeys.length) + sceneKeys.length) % sceneKeys.length;
   if (activeScene === 4) {
-    cameraTarget.set(0, -2.18, 0);
-    cameraPolar = 0.76;
-    cameraAzimuth = 0.35;
+    cameraTarget.set(0, -2.48, 1.4);
+    cameraPolar = 1.0;
+    cameraAzimuth = 0.42;
   } else if (previousScene === 4) {
     cameraTarget.set(0, 0.72, 0);
     cameraPolar = 1.34;
@@ -855,10 +855,10 @@ function resize() {
 
   const isPressureScene = activeScene === 4;
   const isMechanicalScene = activeScene === 3;
-  camera.fov = isPressureScene ? (aspect < 0.75 ? 43 : 38) : 30;
+  camera.fov = isPressureScene ? (aspect < 0.75 ? 48 : 42) : 30;
   const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
-  const neededHeight = isMechanicalScene ? 8.35 : isPressureScene ? 6.8 : Math.max(fitHeight, 8.2);
-  const neededWidth = isMechanicalScene ? 5.2 : isPressureScene ? 11.7 : Math.max(fitWidth, 7.2);
+  const neededHeight = isMechanicalScene ? 8.35 : isPressureScene ? 5.6 : Math.max(fitHeight, 8.2);
+  const neededWidth = isMechanicalScene ? 5.2 : isPressureScene ? 9.2 : Math.max(fitWidth, 7.2);
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
   cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
