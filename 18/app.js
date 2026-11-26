@@ -22,6 +22,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const darkBackground = new THREE.Color(0x020609);
 const lightBackground = new THREE.Color(0xafa6a8);
+const pendulumBackground = new THREE.Color(0xb9c2cb);
 scene.background = darkBackground.clone();
 scene.fog = new THREE.Fog(darkBackground.clone(), 28, 74);
 
@@ -84,7 +85,6 @@ const tripleFrame = new THREE.Group();
 tripleFrame.name = "triple-pendulum-scene";
 scene.add(tripleFrame);
 let tripleMixer = null;
-let tripleLoaded = false;
 
 function recolorMechanism(root) {
   root.traverse((object) => {
@@ -134,8 +134,8 @@ function fitTripleModel(root) {
   const center = bounds.getCenter(new THREE.Vector3());
   const scale = 8 / Math.max(size.y, 0.001);
 
-  fitHeight = 8.8;
-  fitWidth = Math.max(size.x * scale + 1.1, 7.2);
+  fitHeight = Math.max(fitHeight, 8.8);
+  fitWidth = Math.max(fitWidth, size.x * scale + 1.1, 7.2);
   tripleFrame.scale.setScalar(scale);
   tripleFrame.position.set(
     -center.x * scale,
@@ -163,7 +163,6 @@ function loadTriplePendulum() {
         action.timeScale = 0.72;
         action.play();
       }
-      tripleLoaded = true;
     },
     undefined,
     (error) => {
@@ -172,6 +171,63 @@ function loadTriplePendulum() {
   );
 }
 loadTriplePendulum();
+
+const pendulumFrame = new THREE.Group();
+pendulumFrame.name = "uploaded-pendulum-scene";
+pendulumFrame.visible = false;
+scene.add(pendulumFrame);
+let pendulumMixer = null;
+let activeScene = 0;
+
+function fitUploadedPendulum(root) {
+  root.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(root);
+  const size = bounds.getSize(new THREE.Vector3());
+  const center = bounds.getCenter(new THREE.Vector3());
+  const scale = 8 / Math.max(size.y, 0.001);
+
+  fitHeight = Math.max(fitHeight, 8.8);
+  fitWidth = Math.max(fitWidth, size.x * scale + 1.1, 7.2);
+  pendulumFrame.scale.setScalar(scale);
+  pendulumFrame.position.set(
+    -center.x * scale,
+    -bounds.min.y * scale - 3.25,
+    -center.z * scale,
+  );
+  pendulumFrame.add(root);
+  resize();
+}
+
+function loadUploadedPendulum() {
+  const loader = new GLTFLoader();
+  loader.load(
+    "./assets/colored-pendulum/scene.gltf",
+    (gltf) => {
+      const root = gltf.scene;
+      root.name = "uploaded-pendulum-model";
+      root.traverse((object) => {
+        if (!object.isMesh) return;
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
+      fitUploadedPendulum(root);
+
+      if (gltf.animations && gltf.animations.length) {
+        pendulumMixer = new THREE.AnimationMixer(root);
+        const action = pendulumMixer.clipAction(gltf.animations[0]);
+        action.setLoop(THREE.LoopRepeat, Infinity);
+        action.timeScale = 0.62;
+        action.play();
+      }
+      pendulumFrame.visible = activeScene === 2;
+    },
+    undefined,
+    (error) => {
+      console.error("Could not load the uploaded pendulum model.", error);
+    },
+  );
+}
+loadUploadedPendulum();
 
 const armillaryGroup = new THREE.Group();
 armillaryGroup.name = "orbital-armillary-scene";
@@ -401,30 +457,33 @@ armillaryGroup.visible = false;
 
 const darkFloorColor = new THREE.Color(0x10161b);
 const lightFloorColor = new THREE.Color(0x777276);
+const pendulumFloorColor = new THREE.Color(0x818a93);
+const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame];
+const sceneKeys = ["triple", "armillary", "pendulum"];
+const sceneLabels = [
+  "An animated brass triple-pendulum mechanism on a dark display base.",
+  "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
+  "An animated blue, rose, and chrome pendulum sculpture.",
+];
+const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground];
+const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor];
 const transitionStartBg = darkBackground.clone();
 const transitionTargetBg = darkBackground.clone();
 const transitionStartFloor = darkFloorColor.clone();
 const transitionTargetFloor = darkFloorColor.clone();
 let sceneTransition = 1;
-let activeScene = 0;
 let running = true;
 
 function showScene(index) {
-  activeScene = ((index % 2) + 2) % 2;
-  tripleFrame.visible = activeScene === 0;
-  armillaryGroup.visible = activeScene === 1;
-  document.body.dataset.scene = activeScene === 0 ? "triple" : "armillary";
-  canvas.setAttribute(
-    "aria-label",
-    activeScene === 0
-      ? "An animated brass triple-pendulum mechanism on a dark display base."
-      : "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
-  );
+  activeScene = ((index % sceneGroups.length) + sceneGroups.length) % sceneGroups.length;
+  sceneGroups.forEach((group, sceneIndex) => { group.visible = sceneIndex === activeScene; });
+  document.body.dataset.scene = sceneKeys[activeScene];
+  canvas.setAttribute("aria-label", sceneLabels[activeScene]);
 
   transitionStartBg.copy(scene.background);
-  transitionTargetBg.copy(activeScene === 0 ? darkBackground : lightBackground);
+  transitionTargetBg.copy(sceneBackgrounds[activeScene]);
   transitionStartFloor.copy(floorMaterial.color);
-  transitionTargetFloor.copy(activeScene === 0 ? darkFloorColor : lightFloorColor);
+  transitionTargetFloor.copy(sceneFloors[activeScene]);
   sceneTransition = 0;
 }
 nextButton.addEventListener("click", () => showScene(activeScene + 1));
@@ -497,6 +556,7 @@ function animate() {
   if (running) {
     elapsed += delta;
     if (tripleMixer) tripleMixer.update(delta);
+    if (pendulumMixer) pendulumMixer.update(delta);
     rotorA.rotation.set(
       0.12 + 0.22 * Math.sin(elapsed * 0.28),
       elapsed * 0.34,
