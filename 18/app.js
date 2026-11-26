@@ -458,15 +458,18 @@ armillaryGroup.visible = false;
 const darkFloorColor = new THREE.Color(0x10161b);
 const lightFloorColor = new THREE.Color(0x777276);
 const pendulumFloorColor = new THREE.Color(0x818a93);
+const videoElement = document.querySelector("#pendulum-video");
+videoElement.muted = true;
 const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame];
-const sceneKeys = ["triple", "armillary", "pendulum"];
+const sceneKeys = ["triple", "armillary", "pendulum", "video"];
 const sceneLabels = [
   "An animated brass triple-pendulum mechanism on a dark display base.",
   "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
   "An animated blue, rose, and chrome pendulum sculpture.",
+  "A looping video of a gold pendulum mechanism.",
 ];
-const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground];
-const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor];
+const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground, darkBackground];
+const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor, darkFloorColor];
 const transitionStartBg = darkBackground.clone();
 const transitionTargetBg = darkBackground.clone();
 const transitionStartFloor = darkFloorColor.clone();
@@ -475,10 +478,23 @@ let sceneTransition = 1;
 let running = true;
 
 function showScene(index) {
-  activeScene = ((index % sceneGroups.length) + sceneGroups.length) % sceneGroups.length;
+  activeScene = ((index % sceneKeys.length) + sceneKeys.length) % sceneKeys.length;
   sceneGroups.forEach((group, sceneIndex) => { group.visible = sceneIndex === activeScene; });
   document.body.dataset.scene = sceneKeys[activeScene];
+  canvas.style.visibility = activeScene === 3 ? "hidden" : "visible";
   canvas.setAttribute("aria-label", sceneLabels[activeScene]);
+
+  if (activeScene === 3) {
+    try {
+      if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) videoElement.currentTime = 0;
+    } catch {}
+    videoElement.play().catch(() => {});
+  } else {
+    videoElement.pause();
+    try {
+      if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) videoElement.currentTime = 0;
+    } catch {}
+  }
 
   transitionStartBg.copy(scene.background);
   transitionTargetBg.copy(sceneBackgrounds[activeScene]);
@@ -486,6 +502,11 @@ function showScene(index) {
   transitionTargetFloor.copy(sceneFloors[activeScene]);
   sceneTransition = 0;
 }
+videoElement.addEventListener("loadedmetadata", () => {
+  if (activeScene !== 3) return;
+  videoElement.currentTime = 0;
+  videoElement.play().catch(() => {});
+});
 nextButton.addEventListener("click", () => showScene(activeScene + 1));
 previousButton.addEventListener("click", () => showScene(activeScene - 1));
 
