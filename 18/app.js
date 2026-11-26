@@ -3,6 +3,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const canvas = document.querySelector("#scene");
+const previousButton = document.querySelector("#previous-scene");
 const nextButton = document.querySelector("#next-scene");
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -433,9 +434,10 @@ const transitionStartFloor = darkFloorColor.clone();
 const transitionTargetFloor = darkFloorColor.clone();
 let sceneTransition = 1;
 let activeScene = 0;
+let running = true;
 
-function changeScene() {
-  activeScene = activeScene === 0 ? 1 : 0;
+function showScene(index) {
+  activeScene = ((index % 2) + 2) % 2;
   tripleFrame.visible = activeScene === 0;
   armillaryGroup.visible = activeScene === 1;
   document.body.dataset.scene = activeScene === 0 ? "triple" : "armillary";
@@ -452,7 +454,8 @@ function changeScene() {
   transitionTargetFloor.copy(activeScene === 0 ? darkFloorColor : lightFloorColor);
   sceneTransition = 0;
 }
-nextButton.addEventListener("click", changeScene);
+nextButton.addEventListener("click", () => showScene(activeScene + 1));
+previousButton.addEventListener("click", () => showScene(activeScene - 1));
 
 let dragging = false;
 let lastX = 0;
