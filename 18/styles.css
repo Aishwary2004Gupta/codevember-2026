@@ -3,9 +3,8 @@ html, body { width: 100%; height: 100%; min-width: 320px; margin: 0; overflow: h
 body { position: relative; background: #000; }
 #scene { position: fixed; inset: 0; display: block; width: 100%; height: 100%; outline: none; background: #000; cursor: grab; touch-action: none; }
 #scene:active { cursor: grabbing; }
-#next-scene {
+#next-scene, #previous-scene {
   position: fixed;
-  right: max(26px, env(safe-area-inset-right));
   bottom: max(24px, env(safe-area-inset-bottom));
   z-index: 2;
   display: inline-flex;
@@ -20,7 +19,9 @@ body { position: relative; background: #000; }
   cursor: pointer;
   transition: color 700ms ease;
 }
-#next-scene .arrow {
+#next-scene { right: max(26px, env(safe-area-inset-right)); }
+#previous-scene { left: max(26px, env(safe-area-inset-left)); }
+#next-scene .arrow, #previous-scene .arrow {
   display: inline-block;
   font-size: 23px;
   font-weight: 300;
@@ -28,5 +29,7 @@ body { position: relative; background: #000; }
   transition: transform 220ms ease;
 }
 #next-scene:hover .arrow { transform: translateX(5px); }
-#next-scene:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
-body[data-scene="armillary"] #next-scene { color: #222226; }
+#previous-scene:hover .arrow { transform: translateX(-5px); }
+#next-scene:focus-visible, #previous-scene:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
+body[data-scene="armillary"] #next-scene,
+body[data-scene="armillary"] #previous-scene { color: #222226; }
