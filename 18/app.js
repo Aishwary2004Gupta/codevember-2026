@@ -458,6 +458,7 @@ armillaryGroup.visible = false;
 const mechanicalGroup = new THREE.Group();
 mechanicalGroup.name = "arched-double-pendulum-scene";
 mechanicalGroup.visible = false;
+mechanicalGroup.position.y = -0.1;
 scene.add(mechanicalGroup);
 
 const mechanismGold = new THREE.MeshPhysicalMaterial({
@@ -494,18 +495,28 @@ mechanicalGroup.add(mechanismBaseRim);
 
 const mechanismBasePlate = new THREE.Mesh(
   new THREE.CylinderGeometry(2.46, 2.46, 0.09, 128),
-  mechanismDark,
+  paleMetalMaterial,
 );
 mechanismBasePlate.position.y = -2.565;
 mechanismBasePlate.castShadow = true;
 mechanismBasePlate.receiveShadow = true;
 mechanicalGroup.add(mechanismBasePlate);
 
+const mechanismDial = new THREE.Mesh(
+  new THREE.CylinderGeometry(1.28, 1.28, 0.02, 112),
+  mechanismDark,
+);
+mechanismDial.position.y = -2.51;
+mechanismDial.castShadow = true;
+mechanismDial.receiveShadow = true;
+mechanicalGroup.add(mechanismDial);
+
 for (const [radius, tube, material] of [
   [2.42, 0.022, mechanismGold],
   [2.26, 0.012, paleMetalMaterial],
   [1.9, 0.013, mechanismGold],
   [1.58, 0.009, paleMetalMaterial],
+  [1.28, 0.016, mechanismGold],
 ]) {
   addHorizontalRing(mechanicalGroup, radius, tube, material, -2.51);
 }
@@ -518,6 +529,20 @@ for (let index = 0; index < 96; index++) {
   tick.rotation.y = -angle;
   mechanicalGroup.add(tick);
 }
+
+const innerTickGeometry = new THREE.BoxGeometry(0.068, 0.012, 0.018);
+for (let index = 0; index < 60; index++) {
+  const angle = (index / 60) * Math.PI * 2;
+  const tick = new THREE.Mesh(innerTickGeometry, paleMetalMaterial);
+  tick.position.set(1.43 * Math.cos(angle), -2.494, 1.43 * Math.sin(angle));
+  tick.rotation.y = -angle;
+  mechanicalGroup.add(tick);
+}
+
+const dialPin = new THREE.Mesh(new THREE.SphereGeometry(0.055, 24, 20), mechanismGold);
+dialPin.position.set(0, -2.48, 0);
+dialPin.castShadow = true;
+mechanicalGroup.add(dialPin);
 
 const archPoints = [
   [-2.17, -2.54, -0.16],
@@ -768,6 +793,7 @@ function showScene(index) {
   transitionStartFloor.copy(floorMaterial.color);
   transitionTargetFloor.copy(sceneFloors[activeScene]);
   sceneTransition = 0;
+  resize();
 }
 nextButton.addEventListener("click", () => showScene(activeScene + 1));
 previousButton.addEventListener("click", () => showScene(activeScene - 1));
@@ -810,11 +836,12 @@ function resize() {
   camera.aspect = aspect;
 
   const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
-  const neededHeight = Math.max(fitHeight, 8.2);
-  const neededWidth = Math.max(fitWidth, 7.2);
+  const isMechanicalScene = activeScene === 3;
+  const neededHeight = isMechanicalScene ? 8.35 : Math.max(fitHeight, 8.2);
+  const neededWidth = isMechanicalScene ? 5.2 : Math.max(fitWidth, 7.2);
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
-  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
+  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * (isMechanicalScene ? 1.04 : 1.08);
   camera.updateProjectionMatrix();
   placeCamera();
 }
@@ -855,9 +882,10 @@ function animate() {
       0.62 + 0.18 * Math.sin(elapsed * 0.17),
       -0.18 + elapsed * 0.11,
     );
-    mechanismUpperPivot.rotation.z = 0.12 * Math.cos(elapsed * 0.48);
-    mechanismLowerPivot.rotation.z = -1.35 + 1.18 * Math.sin(elapsed * 0.76 - 1.05);
-    mechanismWeight.rotation.y = elapsed * 0.16;
+    mechanismUpperPivot.rotation.z = 0.12 * Math.cos(elapsed * Math.PI / 2);
+    const mechanismPhase = THREE.MathUtils.euclideanModulo(elapsed * Math.PI / 2, Math.PI * 2);
+    mechanismLowerPivot.rotation.z = -2.35 + mechanismPhase;
+    mechanismWeight.rotation.y = THREE.MathUtils.euclideanModulo(elapsed * 0.16, Math.PI * 2);
   }
 
   updateSceneTransition(delta);
