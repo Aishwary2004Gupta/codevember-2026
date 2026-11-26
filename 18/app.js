@@ -200,9 +200,9 @@ const darkMetalMaterial = new THREE.MeshPhysicalMaterial({
   clearcoatRoughness: 0.18,
 });
 const centralOrbMaterial = new THREE.MeshPhysicalMaterial({
-  color: 0xc2b6a2,
+  color: 0xc2c5c7,
   metalness: 0.92,
-  roughness: 0.14,
+  roughness: 0.1,
   clearcoat: 1,
   clearcoatRoughness: 0.08,
 });
@@ -230,27 +230,6 @@ function addHorizontalRing(parent, radius, tube, material, y) {
   ring.receiveShadow = true;
   parent.add(ring);
   return ring;
-}
-
-function makeSupportArch(depth, scale = 1, material = paleMetalMaterial, radius = 0.035) {
-  const points = [];
-  const baseY = -2.61;
-  for (let index = 0; index <= 96; index++) {
-    const t = index / 96;
-    const angle = Math.PI - Math.PI * t;
-    const sine = Math.sin(angle);
-    const cosine = Math.cos(angle);
-    const x = scale * (1.56 * cosine + 1.3 * sine * cosine);
-    const y = baseY + 6.78 * sine;
-    points.push(new THREE.Vector3(x, y, depth));
-  }
-
-  const curve = new THREE.CatmullRomCurve3(points, false, "centripetal");
-  const arch = new THREE.Mesh(new THREE.TubeGeometry(curve, 320, radius, 12, false), material);
-  arch.castShadow = true;
-  arch.receiveShadow = true;
-  armillaryGroup.add(arch);
-  return arch;
 }
 
 const baseBody = new THREE.Mesh(
@@ -294,38 +273,39 @@ for (let index = 0; index < 72; index++) {
   armillaryGroup.add(tick);
 }
 
-makeSupportArch(-0.58, 1, paleMetalMaterial, 0.034);
-makeSupportArch(0.58, 1, paleMetalMaterial, 0.034);
-makeSupportArch(-0.49, 0.975, brassMaterial, 0.009);
-makeSupportArch(0.49, 0.975, brassMaterial, 0.009);
-
-for (const x of [-1.56, 1.56]) {
-  for (const z of [-0.58, 0.58]) {
-    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 0.28, 32), darkMetalMaterial);
-    foot.position.set(x, -2.48, z);
-    foot.castShadow = true;
-    foot.receiveShadow = true;
-    armillaryGroup.add(foot);
-
-    const footRing = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.018, 8, 40), brassMaterial);
-    footRing.rotation.x = Math.PI / 2;
-    footRing.position.set(x, -2.39, z);
-    armillaryGroup.add(footRing);
-  }
-}
-
-const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, 0.34, 48), darkMetalMaterial);
-crown.position.set(0, 4.12, 0);
-crown.castShadow = true;
-crown.receiveShadow = true;
-armillaryGroup.add(crown);
-
-const crownBand = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 10, 48), brassMaterial);
-crownBand.rotation.x = Math.PI / 2;
-crownBand.position.set(0, 4.0, 0);
-armillaryGroup.add(crownBand);
-
 const orbitCenter = new THREE.Vector3(0, 1.12, 0);
+const fixedTrack = new THREE.Mesh(new THREE.TorusGeometry(3.08, 0.034, 12, 240), paleMetalMaterial);
+fixedTrack.position.copy(orbitCenter);
+fixedTrack.rotation.set(0.38, 0.08, 0.06);
+fixedTrack.castShadow = true;
+fixedTrack.receiveShadow = true;
+armillaryGroup.add(fixedTrack);
+
+const fixedTrackTrim = new THREE.Mesh(new THREE.TorusGeometry(3.015, 0.01, 8, 240), brassMaterial);
+fixedTrackTrim.position.copy(orbitCenter);
+fixedTrackTrim.rotation.copy(fixedTrack.rotation);
+fixedTrackTrim.position.z += 0.055;
+armillaryGroup.add(fixedTrackTrim);
+
+const trackRotation = new THREE.Quaternion().setFromEuler(fixedTrack.rotation);
+for (const side of [-1, 1]) {
+  const attach = new THREE.Vector3(side * 1.45, -Math.sqrt(3.08 ** 2 - 1.45 ** 2), 0)
+    .applyQuaternion(trackRotation)
+    .add(orbitCenter);
+  const foot = new THREE.Vector3(side * 1.48, -2.53, -0.48);
+  addCylinderBetween(armillaryGroup, foot, attach, 0.055, darkMetalMaterial, 24);
+
+  const bearing = new THREE.Mesh(new THREE.SphereGeometry(0.12, 28, 20), brassMaterial);
+  bearing.position.copy(attach);
+  bearing.castShadow = true;
+  armillaryGroup.add(bearing);
+
+  const footCap = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.12, 32), darkMetalMaterial);
+  footCap.position.copy(foot);
+  footCap.y = -2.55;
+  footCap.castShadow = true;
+  armillaryGroup.add(footCap);
+}
 const rotorA = new THREE.Group();
 rotorA.position.copy(orbitCenter);
 armillaryGroup.add(rotorA);
@@ -338,26 +318,26 @@ const rotorC = new THREE.Group();
 rotorC.position.copy(orbitCenter);
 armillaryGroup.add(rotorC);
 
-const ringA = new THREE.Mesh(new THREE.TorusGeometry(2.58, 0.035, 12, 200), paleMetalMaterial);
+const ringA = new THREE.Mesh(new THREE.TorusGeometry(2.62, 0.035, 12, 220), paleMetalMaterial);
 ringA.rotation.set(0.22, 0.1, 0.05);
 ringA.castShadow = true;
 ringA.receiveShadow = true;
 rotorA.add(ringA);
 
-const ringB = new THREE.Mesh(new THREE.TorusGeometry(2.22, 0.03, 12, 180), brassMaterial);
+const ringB = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.03, 12, 200), paleMetalMaterial);
 ringB.rotation.set(1.0, 0.15, 0.28);
 ringB.castShadow = true;
 ringB.receiveShadow = true;
 rotorB.add(ringB);
 
-const ringC = new THREE.Mesh(new THREE.TorusGeometry(1.86, 0.025, 10, 160), paleMetalMaterial);
+const ringC = new THREE.Mesh(new THREE.TorusGeometry(1.92, 0.025, 10, 180), brassMaterial);
 ringC.rotation.set(0.54, 0.62, -0.18);
 ringC.castShadow = true;
 ringC.receiveShadow = true;
 rotorC.add(ringC);
 
 addCylinderBetween(
-  rotorA,
+  ringA,
   new THREE.Vector3(-2.38, 0, 0),
   new THREE.Vector3(2.38, 0, 0),
   0.055,
@@ -376,22 +356,21 @@ for (const x of [-2.38, 2.38]) {
   weight.position.set(x, 0, 0);
   weight.castShadow = true;
   weight.receiveShadow = true;
-  rotorA.add(weight);
+  ringA.add(weight);
 
   const outerDisk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.11, 40), brassMaterial);
   outerDisk.rotation.z = Math.PI / 2;
   outerDisk.position.set(x, 0, 0);
   outerDisk.castShadow = true;
   outerDisk.receiveShadow = true;
-  rotorA.add(outerDisk);
-
+  ringA.add(outerDisk);
 }
 
 const hub = new THREE.Mesh(new THREE.SphereGeometry(0.79, 64, 48), centralOrbMaterial);
-hub.position.set(0, 0, 0);
+hub.position.copy(orbitCenter);
 hub.castShadow = true;
 hub.receiveShadow = true;
-rotorA.add(hub);
+armillaryGroup.add(hub);
 
 addCylinderBetween(
   rotorB,
@@ -410,19 +389,13 @@ addCylinderBetween(
   20,
 );
 
-const lowerOrb = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 32), brassMaterial);
-lowerOrb.position.set(1.15, -2.42, 0.74);
-lowerOrb.castShadow = true;
-lowerOrb.receiveShadow = true;
-armillaryGroup.add(lowerOrb);
-addCylinderBetween(
-  armillaryGroup,
-  new THREE.Vector3(1.15, -2.54, 0.74),
-  new THREE.Vector3(1.15, -2.23, 0.74),
-  0.05,
-  paleMetalMaterial,
-  20,
-);
+const thirdBallCarrier = new THREE.Group();
+ringC.add(thirdBallCarrier);
+const thirdOrbitingBall = new THREE.Mesh(new THREE.SphereGeometry(0.24, 40, 32), paleMetalMaterial);
+thirdOrbitingBall.position.set(1.92, 0, 0);
+thirdOrbitingBall.castShadow = true;
+thirdOrbitingBall.receiveShadow = true;
+thirdBallCarrier.add(thirdOrbitingBall);
 
 armillaryGroup.visible = false;
 
@@ -445,7 +418,7 @@ function showScene(index) {
     "aria-label",
     activeScene === 0
       ? "An animated brass triple-pendulum mechanism on a dark display base."
-      : "A rotating silver and brass armillary pendulum on a dark circular base.",
+      : "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
   );
 
   transitionStartBg.copy(scene.background);
