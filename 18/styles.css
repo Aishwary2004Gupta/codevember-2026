@@ -32,4 +32,6 @@ body { position: relative; background: #000; }
 #previous-scene:hover .arrow { transform: translateX(-5px); }
 #next-scene:focus-visible, #previous-scene:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
 body[data-scene="armillary"] #next-scene,
-body[data-scene="armillary"] #previous-scene { color: #222226; }
+body[data-scene="armillary"] #previous-scene,
+body[data-scene="pendulum"] #next-scene,
+body[data-scene="pendulum"] #previous-scene { color: #222226; }
