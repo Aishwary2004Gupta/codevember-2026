@@ -455,18 +455,297 @@ thirdBallCarrier.add(thirdOrbitingBall);
 
 armillaryGroup.visible = false;
 
+const mechanicalGroup = new THREE.Group();
+mechanicalGroup.name = "arched-double-pendulum-scene";
+mechanicalGroup.visible = false;
+scene.add(mechanicalGroup);
+
+const mechanismGold = new THREE.MeshPhysicalMaterial({
+  color: 0xc29a4c,
+  metalness: 0.9,
+  roughness: 0.2,
+  clearcoat: 0.85,
+  clearcoatRoughness: 0.13,
+});
+const mechanismDark = new THREE.MeshPhysicalMaterial({
+  color: 0x11161c,
+  metalness: 0.82,
+  roughness: 0.22,
+  clearcoat: 0.8,
+});
+
+const mechanismBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.48, 2.57, 0.5, 128),
+  mechanismDark,
+);
+mechanismBase.position.y = -2.94;
+mechanismBase.castShadow = true;
+mechanismBase.receiveShadow = true;
+mechanicalGroup.add(mechanismBase);
+
+const mechanismBaseRim = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.53, 2.54, 0.1, 128),
+  paleMetalMaterial,
+);
+mechanismBaseRim.position.y = -2.66;
+mechanismBaseRim.castShadow = true;
+mechanismBaseRim.receiveShadow = true;
+mechanicalGroup.add(mechanismBaseRim);
+
+const mechanismBasePlate = new THREE.Mesh(
+  new THREE.CylinderGeometry(2.46, 2.46, 0.09, 128),
+  mechanismDark,
+);
+mechanismBasePlate.position.y = -2.565;
+mechanismBasePlate.castShadow = true;
+mechanismBasePlate.receiveShadow = true;
+mechanicalGroup.add(mechanismBasePlate);
+
+for (const [radius, tube, material] of [
+  [2.42, 0.022, mechanismGold],
+  [2.26, 0.012, paleMetalMaterial],
+  [1.9, 0.013, mechanismGold],
+  [1.58, 0.009, paleMetalMaterial],
+]) {
+  addHorizontalRing(mechanicalGroup, radius, tube, material, -2.51);
+}
+
+const mechanismTickGeometry = new THREE.BoxGeometry(0.045, 0.012, 0.024);
+for (let index = 0; index < 96; index++) {
+  const angle = (index / 96) * Math.PI * 2;
+  const tick = new THREE.Mesh(mechanismTickGeometry, mechanismGold);
+  tick.position.set(2.08 * Math.cos(angle), -2.506, 2.08 * Math.sin(angle));
+  tick.rotation.y = -angle;
+  mechanicalGroup.add(tick);
+}
+
+const archPoints = [
+  [-2.17, -2.54, -0.16],
+  [-2.2, -0.35, -0.16],
+  [-2.02, 1.76, -0.16],
+  [-1.55, 3.35, -0.16],
+  [-0.86, 4.35, -0.16],
+  [-0.05, 4.77, -0.16],
+  [0.68, 4.66, -0.16],
+  [1.46, 3.75, -0.16],
+  [2.02, 1.82, -0.16],
+  [2.2, -0.34, -0.16],
+  [2.17, -2.54, -0.16],
+].map(([x, y, z]) => new THREE.Vector3(x, y, z));
+
+for (const zOffset of [-0.15, 0.15]) {
+  const railPoints = archPoints.map((point) => new THREE.Vector3(point.x, point.y, point.z + zOffset));
+  const archRail = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(railPoints), 220, 0.036, 12, false),
+    paleMetalMaterial,
+  );
+  archRail.castShadow = true;
+  archRail.receiveShadow = true;
+  mechanicalGroup.add(archRail);
+}
+
+const archAccentPoints = archPoints.map((point) => new THREE.Vector3(point.x, point.y, point.z + 0.24));
+const archAccent = new THREE.Mesh(
+  new THREE.TubeGeometry(new THREE.CatmullRomCurve3(archAccentPoints), 220, 0.012, 8, false),
+  mechanismGold,
+);
+mechanicalGroup.add(archAccent);
+
+for (const x of [-2.17, 2.17]) {
+  for (const z of [-0.15, 0.15]) {
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.15, 40), mechanismDark);
+    foot.position.set(x, -2.55, z);
+    foot.castShadow = true;
+    foot.receiveShadow = true;
+    mechanicalGroup.add(foot);
+    const footCollar = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.018, 8, 40), mechanismGold);
+    footCollar.rotation.x = Math.PI / 2;
+    footCollar.position.set(x, -2.47, z);
+    mechanicalGroup.add(footCollar);
+  }
+}
+
+const rearSupport = addCylinderBetween(
+  mechanicalGroup,
+  new THREE.Vector3(0.58, -2.5, -0.33),
+  new THREE.Vector3(0.58, 0.7, -0.33),
+  0.052,
+  paleMetalMaterial,
+  32,
+);
+const rearSupportAccent = addCylinderBetween(
+  mechanicalGroup,
+  new THREE.Vector3(0.58, -2.48, -0.27),
+  new THREE.Vector3(0.58, 0.66, -0.27),
+  0.018,
+  mechanismGold,
+  20,
+);
+rearSupport.name = "rear-balance-column";
+rearSupportAccent.name = "balance-column-gold-inlay";
+
+function addMechanismPivot(parent, x, y, z, radius) {
+  const housing = new THREE.Mesh(
+    new THREE.SphereGeometry(radius, 40, 32),
+    mechanismGold,
+  );
+  housing.position.set(x, y, z - 0.04);
+  housing.castShadow = true;
+  housing.receiveShadow = true;
+  parent.add(housing);
+
+  const axle = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.74, radius * 0.74, 0.42, 48),
+    paleMetalMaterial,
+  );
+  axle.rotation.x = Math.PI / 2;
+  axle.position.set(x, y, z + 0.035);
+  axle.castShadow = true;
+  axle.receiveShadow = true;
+  parent.add(axle);
+
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(radius * 0.58, radius * 0.085, 10, 56),
+    mechanismGold,
+  );
+  rim.position.set(x, y, z + 0.255);
+  parent.add(rim);
+
+  const face = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius * 0.48, radius * 0.48, 0.035, 48),
+    mechanismDark,
+  );
+  face.rotation.x = Math.PI / 2;
+  face.position.set(x, y, z + 0.255);
+  parent.add(face);
+
+  const center = new THREE.Mesh(
+    new THREE.CircleGeometry(radius * 0.31, 40),
+    paleMetalMaterial,
+  );
+  center.position.set(x, y, z + 0.28);
+  parent.add(center);
+}
+
+const topAxle = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.76, 48), paleMetalMaterial);
+topAxle.rotation.x = Math.PI / 2;
+topAxle.position.set(0, 4.45, -0.01);
+topAxle.castShadow = true;
+topAxle.receiveShadow = true;
+mechanicalGroup.add(topAxle);
+
+const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.22, 64), mechanismDark);
+crown.position.set(0, 4.77, 0);
+crown.castShadow = true;
+crown.receiveShadow = true;
+mechanicalGroup.add(crown);
+
+const crownBand = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.025, 10, 64), mechanismGold);
+crownBand.rotation.x = Math.PI / 2;
+crownBand.position.set(0, 4.68, 0);
+mechanicalGroup.add(crownBand);
+addMechanismPivot(mechanicalGroup, 0, 4.45, 0.03, 0.32);
+
+const mechanismUpperPivot = new THREE.Group();
+mechanismUpperPivot.position.set(0, 4.45, 0.02);
+mechanicalGroup.add(mechanismUpperPivot);
+
+for (const x of [-0.19, 0.19]) {
+  addCylinderBetween(
+    mechanismUpperPivot,
+    new THREE.Vector3(x, -0.06, 0),
+    new THREE.Vector3(x, -3.63, 0),
+    0.045,
+    paleMetalMaterial,
+    24,
+  );
+  addCylinderBetween(
+    mechanismUpperPivot,
+    new THREE.Vector3(x, -0.08, 0.055),
+    new THREE.Vector3(x, -3.61, 0.055),
+    0.012,
+    mechanismGold,
+    12,
+  );
+}
+
+for (const y of [-0.35, -1.13, -1.92, -2.71, -3.48]) {
+  addCylinderBetween(
+    mechanismUpperPivot,
+    new THREE.Vector3(-0.2, y, 0.015),
+    new THREE.Vector3(0.2, y, 0.015),
+    0.034,
+    mechanismDark,
+    20,
+  );
+  const collar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.09, 0.13), mechanismGold);
+  collar.position.set(0, y, 0.025);
+  collar.castShadow = true;
+  mechanismUpperPivot.add(collar);
+}
+
+addMechanismPivot(mechanismUpperPivot, 0, -3.63, 0.04, 0.34);
+
+const mechanismLowerPivot = new THREE.Group();
+mechanismLowerPivot.position.set(0, -3.63, 0.05);
+mechanismUpperPivot.add(mechanismLowerPivot);
+
+addCylinderBetween(
+  mechanismLowerPivot,
+  new THREE.Vector3(0, -0.17, -0.02),
+  new THREE.Vector3(0, -1.4, -0.02),
+  0.077,
+  mechanismGold,
+  28,
+);
+addCylinderBetween(
+  mechanismLowerPivot,
+  new THREE.Vector3(0, -0.22, 0.045),
+  new THREE.Vector3(0, -1.36, 0.045),
+  0.018,
+  paleMetalMaterial,
+  16,
+);
+
+const mechanismWeight = new THREE.Group();
+mechanismWeight.position.set(0, -1.78, -0.02);
+mechanismLowerPivot.add(mechanismWeight);
+
+const weightCore = new THREE.Mesh(new THREE.SphereGeometry(0.49, 64, 48), mechanismGold);
+weightCore.castShadow = true;
+weightCore.receiveShadow = true;
+mechanismWeight.add(weightCore);
+
+const weightBand = new THREE.Mesh(new THREE.TorusGeometry(0.475, 0.026, 12, 96), paleMetalMaterial);
+weightBand.rotation.set(0.54, 0.22, -0.42);
+weightBand.position.z = 0.045;
+weightBand.castShadow = true;
+weightBand.receiveShadow = true;
+mechanismWeight.add(weightBand);
+
+const weightGoldSeam = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.012, 8, 96), mechanismDark);
+weightGoldSeam.rotation.set(-0.24, 0.31, 0.58);
+mechanismWeight.add(weightGoldSeam);
+
+for (const z of [-0.18, 0.18]) {
+  const bearing = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 40), mechanismDark);
+  bearing.rotation.x = Math.PI / 2;
+  bearing.position.set(0, -3.63, z);
+  bearing.castShadow = true;
+  bearing.receiveShadow = true;
+  mechanismUpperPivot.add(bearing);
+}
+
 const darkFloorColor = new THREE.Color(0x10161b);
 const lightFloorColor = new THREE.Color(0x777276);
 const pendulumFloorColor = new THREE.Color(0x818a93);
-const videoElement = document.querySelector("#pendulum-video");
-videoElement.muted = true;
-const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame];
-const sceneKeys = ["triple", "armillary", "pendulum", "video"];
+const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame, mechanicalGroup];
+const sceneKeys = ["triple", "armillary", "pendulum", "mechanical"];
 const sceneLabels = [
   "An animated brass triple-pendulum mechanism on a dark display base.",
   "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
   "An animated blue, rose, and chrome pendulum sculpture.",
-  "A looping video of a gold pendulum mechanism.",
+  "A looping gold double pendulum inside a polished arched frame.",
 ];
 const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground, darkBackground];
 const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor, darkFloorColor];
@@ -481,20 +760,8 @@ function showScene(index) {
   activeScene = ((index % sceneKeys.length) + sceneKeys.length) % sceneKeys.length;
   sceneGroups.forEach((group, sceneIndex) => { group.visible = sceneIndex === activeScene; });
   document.body.dataset.scene = sceneKeys[activeScene];
-  canvas.style.visibility = activeScene === 3 ? "hidden" : "visible";
+  canvas.style.visibility = "visible";
   canvas.setAttribute("aria-label", sceneLabels[activeScene]);
-
-  if (activeScene === 3) {
-    try {
-      if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) videoElement.currentTime = 0;
-    } catch {}
-    videoElement.play().catch(() => {});
-  } else {
-    videoElement.pause();
-    try {
-      if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) videoElement.currentTime = 0;
-    } catch {}
-  }
 
   transitionStartBg.copy(scene.background);
   transitionTargetBg.copy(sceneBackgrounds[activeScene]);
@@ -502,11 +769,6 @@ function showScene(index) {
   transitionTargetFloor.copy(sceneFloors[activeScene]);
   sceneTransition = 0;
 }
-videoElement.addEventListener("loadedmetadata", () => {
-  if (activeScene !== 3) return;
-  videoElement.currentTime = 0;
-  videoElement.play().catch(() => {});
-});
 nextButton.addEventListener("click", () => showScene(activeScene + 1));
 previousButton.addEventListener("click", () => showScene(activeScene - 1));
 
@@ -593,6 +855,9 @@ function animate() {
       0.62 + 0.18 * Math.sin(elapsed * 0.17),
       -0.18 + elapsed * 0.11,
     );
+    mechanismUpperPivot.rotation.z = 0.12 * Math.cos(elapsed * 0.48);
+    mechanismLowerPivot.rotation.z = -1.35 + 1.18 * Math.sin(elapsed * 0.76 - 1.05);
+    mechanismWeight.rotation.y = elapsed * 0.16;
   }
 
   updateSceneTransition(delta);
