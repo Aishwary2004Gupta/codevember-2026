@@ -430,7 +430,7 @@
         if (row.dataset.previewScene) {
           const frame = document.createElement("iframe");
           const previewUrl = new URL(row.dataset.previewScene, window.location.href);
-          previewUrl.searchParams.set("preview", "pendulum-wall-5");
+          previewUrl.searchParams.set("preview", "pendulum-reference-7");
           frame.src = previewUrl.href;
           frame.title = row.dataset.title + " scene preview";
           frame.loading = "eager";
@@ -442,7 +442,7 @@
               previewDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
               if (row.dataset.title === "Pendulum") {
                 const previewStyle = previewDocument.createElement("style");
-                previewStyle.textContent = "html, body { overflow: hidden !important; background: #171621 !important; } .cv-top, .cv-title, .cv-hud, .fig { display: none !important; } .cv-figure canvas { opacity: 1 !important; }";
+                previewStyle.textContent = "html, body { overflow: hidden !important; background: #d6d3cd !important; } .cv-top, .cv-title, .cv-hud, .fig, .site-meta, .site-copy, .interaction, .scene-controls, #scene-error { display: none !important; } #scene { opacity: 1 !important; }";
                 previewDocument.head.appendChild(previewStyle);
               }
             } catch (_) {}

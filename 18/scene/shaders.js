@@ -549,3 +549,97 @@ void main() {
   col = col / (1.0 + 0.18 * max(col - 0.85, 0.0));
   o = vec4(col, 1.0);
 }`;
+
+// A lit, tactile surface shader for the alternate forms. The glass diamond
+// keeps the original ray-traced quartz shader; these finishes make the OBJ
+// skull, duck, hand, astronaut, and torus feel like solid crafted materials.
+export const FORM_VS = `${HEAD}
+uniform mat4 uVP;
+uniform mat3 uRot;
+uniform vec3 uPos;
+in vec3 aPos;
+in vec3 aNormal;
+out vec3 vLocal;
+out vec3 vWorld;
+out vec3 vNormal;
+void main() {
+  vec3 world = uRot * aPos + uPos;
+  vLocal = aPos;
+  vWorld = world;
+  vNormal = normalize(uRot * aNormal);
+  gl_Position = uVP * vec4(world, 1.0);
+}`;
+
+export const FORM_FS = `${HEAD}
+const vec3 SUN = ${v3(SUN)};
+uniform vec3 uEye;
+uniform int uSurface;
+uniform float uTime;
+in vec3 vLocal;
+in vec3 vWorld;
+in vec3 vNormal;
+out vec4 o;
+float hash3(vec3 p) {
+  p = fract(p * 0.3183099 + 0.1);
+  p *= 17.0;
+  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+float noise3(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash3(i), hash3(i + vec3(1, 0, 0)), f.x),
+      mix(hash3(i + vec3(0, 1, 0)), hash3(i + vec3(1, 1, 0)), f.x), f.y),
+    mix(mix(hash3(i + vec3(0, 0, 1)), hash3(i + vec3(1, 0, 1)), f.x),
+      mix(hash3(i + vec3(0, 1, 1)), hash3(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
+void main() {
+  vec3 n = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 viewDir = normalize(uEye - vWorld);
+  vec3 lightDir = normalize(-SUN);
+  float ndl = max(dot(n, lightDir), 0.0);
+  float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 4.0);
+  float grain = noise3(vLocal * 145.0) * 0.55 + noise3(vLocal * 47.0 + 2.7) * 0.45;
+  float cloud = noise3(vLocal * 13.0 + vec3(0.0, uTime * 0.006, 0.0));
+  vec3 base = vec3(0.83, 0.79, 0.74);
+  vec3 edge = vec3(0.95, 0.91, 0.87);
+  float rough = 0.55;
+  float metal = 0.0;
+  float textureAmount = 0.045;
+  if (uSurface == 0) { // shell
+    base = vec3(0.68, 0.69, 0.66); edge = vec3(0.94, 0.82, 0.8); rough = 0.3; textureAmount = 0.07;
+  } else if (uSurface == 1) { // grapefruit
+    base = vec3(0.71, 0.20, 0.09); edge = vec3(1.0, 0.48, 0.20); rough = 0.78; textureAmount = 0.25;
+  } else if (uSurface == 2) { // porcelain
+    base = vec3(0.82, 0.80, 0.74); edge = vec3(1.0, 0.96, 0.88); rough = 0.21; textureAmount = 0.035;
+  } else if (uSurface == 3) { // egg
+    base = vec3(0.76, 0.65, 0.43); edge = vec3(0.97, 0.85, 0.61); rough = 0.48; textureAmount = 0.11;
+  } else if (uSurface == 4) { // chocolate
+    base = vec3(0.22, 0.075, 0.035); edge = vec3(0.51, 0.22, 0.09); rough = 0.24; textureAmount = 0.12;
+  } else if (uSurface == 5) { // obsidian
+    base = vec3(0.025, 0.045, 0.061); edge = vec3(0.23, 0.34, 0.40); rough = 0.1; metal = 0.45; textureAmount = 0.035;
+  } else if (uSurface == 6) { // bronze
+    base = vec3(0.36, 0.17, 0.065); edge = vec3(0.86, 0.56, 0.22); rough = 0.25; metal = 0.78; textureAmount = 0.08;
+  } else if (uSurface == 7) { // iridescent
+    base = vec3(0.62, 0.73, 0.77); edge = vec3(0.98, 0.77, 0.83); rough = 0.16; metal = 0.32; textureAmount = 0.09;
+  } else { // glass
+    base = vec3(0.45, 0.63, 0.69); edge = vec3(0.91, 0.97, 1.0); rough = 0.08; metal = 0.18; textureAmount = 0.025;
+  }
+  float micro = (grain - 0.5) * textureAmount;
+  if (uSurface == 1) micro += (cloud - 0.5) * 0.18 + (grain > 0.68 ? -0.06 : 0.0);
+  if (uSurface == 3) micro += (grain > 0.76 ? -0.12 : 0.015);
+  if (uSurface == 6) micro += (grain - 0.5) * 0.08;
+  vec3 tint = base + vec3(micro);
+  if (uSurface == 7) {
+    vec3 spectrum = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + fresnel * 0.82 + dot(n, lightDir) * 0.12));
+    tint = mix(tint, spectrum * 0.78 + vec3(0.3), 0.42 + fresnel * 0.26);
+  }
+  float wrap = max(0.0, (dot(n, lightDir) + 0.25) / 1.25);
+  float specPower = mix(100.0, 18.0, rough);
+  vec3 halfDir = normalize(lightDir + viewDir);
+  float spec = pow(max(dot(n, halfDir), 0.0), specPower) * (0.2 + (1.0 - rough) * 0.95);
+  vec3 lit = tint * (0.34 + wrap * 0.82) * (1.0 - metal * 0.38);
+  lit += edge * (spec * (0.65 + metal) + fresnel * (0.15 + metal * 0.36));
+  if (uSurface == 8) lit += edge * pow(max(dot(reflect(-viewDir, n), lightDir), 0.0), 72.0) * 1.25;
+  o = vec4(lit, 1.0);
+}`;

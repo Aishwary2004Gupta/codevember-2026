@@ -15,6 +15,10 @@ export function apply(p, m) {
         p.key(m.k);
     else if (m.t === "spin")
         p.spin();
+    else if (m.t === "shape")
+        p.setShape(m.v);
+    else if (m.t === "surface")
+        p.setSurface(m.v);
     else if (m.t === "dispose")
         p.dispose();
 }

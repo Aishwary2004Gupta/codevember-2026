@@ -3,17 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#e7e5df">
-  <meta name="description" content="Four pendulums made from sculpted objects swing beneath raised 3D lettering on a quiet plaster wall.">
+  <meta name="theme-color" content="#d6d3cd">
+  <meta name="description" content="A sunlit pendulum study. Choose a suspended form and surface, then drag it to set it swinging.">
   <title>18 — Pendulum</title>
-  <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
-  </script>
-  <link rel="stylesheet" href="styles.css?v=wall-5">
+  <link rel="stylesheet" href="styles.css?v=pendulum-reference-7">
 </head>
 <body>
-  <canvas id="scene" aria-label="Four sculpted 3D models swing as pendulums against a clean light plaster wall."></canvas>
-  <h1 id="wall-title" aria-hidden="true">pendulum</h1>
-  <script type="module" src="app.js?v=wall-5"></script>
+  <canvas id="scene" tabindex="0" aria-label="A suspended object swings in a sunlit plaster room. Drag it and release to set it swinging."></canvas>
+  <header class="site-meta">
+    <a class="brand" href="../index.html">CODEVEMBER ’26</a>
+    <span class="day">DAY 18 OF 30</span>
+    <div class="scene-controls" aria-label="Pendulum appearance">
+      <label class="control-field" for="form-select">
+        <span>FORM</span>
+        <select id="form-select">
+          <option value="skull" selected>Skull</option>
+          <option value="diamond">Diamond</option>
+          <option value="donut">Donut</option>
+          <option value="duck">Duck</option>
+          <option value="hand">Hand</option>
+          <option value="astronaut">Astronaut</option>
+        </select>
+      </label>
+      <label class="control-field" for="surface-select">
+        <span>SURFACE</span>
+        <select id="surface-select">
+          <option>Shell</option>
+          <option>Grapefruit</option>
+          <option>Porcelain</option>
+          <option>Egg</option>
+          <option>Chocolate</option>
+          <option>Obsidian</option>
+          <option>Bronze</option>
+          <option selected>Iridescent</option>
+          <option>Glass</option>
+        </select>
+      </label>
+    </div>
+  </header>
+  <main class="site-copy">
+    <p class="figure-label"><span></span> NO. 18</p>
+    <h1 id="wall-title">Pendulum<span>.</span></h1>
+    <p class="caption">A stone in the sun, swinging.<br>Drag the form and let it go; throw it hard and it loops.</p>
+  </main>
+  <aside class="interaction">
+    <p class="drag-hint">DRAG THE FORM, LET GO</p>
+    <button id="spin-button" type="button">SPIN</button>
+  </aside>
+  <p id="scene-error" role="status" hidden>The pendulum scene could not start. Open this page from a local web server.</p>
+  <script type="module" src="app.js?v=pendulum-reference-7"></script>
 </body>
 </html>

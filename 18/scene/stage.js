@@ -49,6 +49,12 @@ export class Stage {
     spin() {
         this.post({ t: "spin" });
     }
+    shape(name) {
+        this.post({ t: "shape", v: name });
+    }
+    surface(name) {
+        this.post({ t: "surface", v: name });
+    }
     hear(m) {
         if (this.dead)
             return;
