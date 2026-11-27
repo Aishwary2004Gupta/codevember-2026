@@ -1,8 +1,5 @@
 // STAGE
 // page side: size, visibility, pointer; scene in a worker when possible, else here
-const TAP_MS = 250;
-const TAP_PX = 6;
-const KEYS = new Set(["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", " "]);
 export class Stage {
     canvas;
     post;
@@ -12,9 +9,7 @@ export class Stage {
     left = 0;
     top = 0;
     pointer = -1;
-    downX = 0;
-    downY = 0;
-    downT = 0;
+    dragging = false;
     visible = false;
     dead = false;
     constructor(canvas, post) {
@@ -25,7 +20,7 @@ export class Stage {
         const mq = matchMedia("(prefers-reduced-motion: reduce)");
         let stage;
         if ("transferControlToOffscreen" in canvas && "OffscreenCanvas" in window) {
-            const worker = new Worker(new URL("./worker.js", import.meta.url), { type: "module" });
+            const worker = new Worker(new URL("./worker.js?v=glass-grab-10", import.meta.url), { type: "module" });
             const off = canvas.transferControlToOffscreen();
             stage = new Stage(canvas, (m) => worker.postMessage(m));
             worker.onmessage = (e) => stage.hear(e.data);
@@ -35,8 +30,8 @@ export class Stage {
         }
         else {
             const [{ Pendulum }, { apply }] = await Promise.all([
-                import("./pendulum.js"),
-                import("./apply.js"),
+                import("./pendulum.js?v=glass-grab-10"),
+                import("./apply.js?v=glass-grab-10"),
             ]);
             const p = new Pendulum(canvas, mq.matches);
             stage = new Stage(canvas, (m) => apply(p, m));
@@ -46,19 +41,19 @@ export class Stage {
         stage.watch(mq);
         return stage;
     }
-    spin() {
-        this.post({ t: "spin" });
-    }
     shape(name) {
         this.post({ t: "shape", v: name });
-    }
-    surface(name) {
-        this.post({ t: "surface", v: name });
     }
     hear(m) {
         if (this.dead)
             return;
-        if (m.t === "shown")
+        if (m.t === "drag") {
+            if (m.id === this.pointer) {
+                this.dragging = m.v;
+                this.canvas.style.cursor = this.dragging ? "grabbing" : "";
+            }
+        }
+        else if (m.t === "shown")
             this.onShown();
         else
             this.onLost();
@@ -88,8 +83,7 @@ export class Stage {
         c.addEventListener("pointermove", this.move, opts);
         c.addEventListener("pointerup", this.up, opts);
         c.addEventListener("pointercancel", this.up, opts);
-        c.addEventListener("keydown", this.key);
-        this.cleanups.push(() => ro.disconnect(), () => io.disconnect(), () => document.removeEventListener("visibilitychange", show), () => mq.removeEventListener("change", onMotion), () => c.removeEventListener("pointerdown", this.down), () => c.removeEventListener("pointermove", this.move), () => c.removeEventListener("pointerup", this.up), () => c.removeEventListener("pointercancel", this.up), () => c.removeEventListener("keydown", this.key));
+        this.cleanups.push(() => ro.disconnect(), () => io.disconnect(), () => document.removeEventListener("visibilitychange", show), () => mq.removeEventListener("change", onMotion), () => c.removeEventListener("pointerdown", this.down), () => c.removeEventListener("pointermove", this.move), () => c.removeEventListener("pointerup", this.up), () => c.removeEventListener("pointercancel", this.up));
     }
     // INPUT
     down = (e) => {
@@ -97,11 +91,12 @@ export class Stage {
             return;
         this.pointer = e.pointerId;
         this.canvas.setPointerCapture(e.pointerId);
-        this.canvas.style.cursor = "grabbing";
-        this.downX = e.clientX;
-        this.downY = e.clientY;
-        this.downT = performance.now();
-        this.post({ t: "down", x: e.clientX - this.left, y: e.clientY - this.top, ms: e.timeStamp });
+        this.dragging = false;
+        const accepted = this.post({ t: "down", id: e.pointerId, x: e.clientX - this.left, y: e.clientY - this.top, ms: e.timeStamp });
+        if (accepted === true) {
+            this.dragging = true;
+            this.canvas.style.cursor = "grabbing";
+        }
     };
     move = (e) => {
         if (e.pointerId !== this.pointer)
@@ -112,16 +107,9 @@ export class Stage {
         if (e.pointerId !== this.pointer)
             return;
         this.pointer = -1;
+        this.dragging = false;
         this.canvas.style.cursor = "";
-        const tap = performance.now() - this.downT < TAP_MS &&
-            Math.hypot(e.clientX - this.downX, e.clientY - this.downY) < TAP_PX;
-        this.post({ t: "up", x: e.clientX - this.left, tap, ms: e.timeStamp });
-    };
-    key = (e) => {
-        if (!KEYS.has(e.key))
-            return;
-        e.preventDefault();
-        this.post({ t: "key", k: e.key });
+        this.post({ t: "up", ms: e.timeStamp });
     };
     dispose() {
         if (this.dead)

@@ -1,5 +1,5 @@
-import { apply } from "./apply.js";
-import { Pendulum } from "./pendulum.js";
+import { apply } from "./apply.js?v=glass-grab-10";
+import { Pendulum } from "./pendulum.js?v=glass-grab-10";
 // WORKER
 // waking a cold gpu here never blocks the page
 let p = null;
@@ -20,7 +20,8 @@ self.onmessage = (e) => {
     }
     if (!p)
         return;
-    apply(p, m);
+    const result = apply(p, m);
+    if (m.t === "down") send({ t: "drag", id: m.id, v: result === true });
     if (m.t === "dispose") {
         p = null;
         close();

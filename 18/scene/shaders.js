@@ -623,7 +623,8 @@ void main() {
   } else if (uSurface == 7) { // iridescent
     base = vec3(0.62, 0.73, 0.77); edge = vec3(0.98, 0.77, 0.83); rough = 0.16; metal = 0.32; textureAmount = 0.09;
   } else { // glass
-    base = vec3(0.45, 0.63, 0.69); edge = vec3(0.91, 0.97, 1.0); rough = 0.08; metal = 0.18; textureAmount = 0.025;
+    // A cool, near-white crystal finish shared by every pendulum form.
+    base = vec3(0.72, 0.75, 0.74); edge = vec3(0.99, 0.99, 0.97); rough = 0.045; metal = 0.04; textureAmount = 0.025;
   }
   float micro = (grain - 0.5) * textureAmount;
   if (uSurface == 1) micro += (cloud - 0.5) * 0.18 + (grain > 0.68 ? -0.06 : 0.0);
@@ -640,6 +641,6 @@ void main() {
   float spec = pow(max(dot(n, halfDir), 0.0), specPower) * (0.2 + (1.0 - rough) * 0.95);
   vec3 lit = tint * (0.34 + wrap * 0.82) * (1.0 - metal * 0.38);
   lit += edge * (spec * (0.65 + metal) + fresnel * (0.15 + metal * 0.36));
-  if (uSurface == 8) lit += edge * pow(max(dot(reflect(-viewDir, n), lightDir), 0.0), 72.0) * 1.25;
+  if (uSurface == 8) lit += edge * pow(max(dot(reflect(-viewDir, n), lightDir), 0.0), 72.0) * 1.4;
   o = vec4(lit, 1.0);
 }`;

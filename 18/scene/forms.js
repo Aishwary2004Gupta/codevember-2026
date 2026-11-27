@@ -58,6 +58,28 @@ export function diamondMesh(c) {
   return { positions: c.pos, normals: c.normal, count: c.tris * 3, height: c.height, radius: c.radius };
 }
 
+export function sphereMesh() {
+  const radius = 0.205;
+  const stacks = 28;
+  const slices = 48;
+  const positions = [];
+  const normals = [];
+  const point = (i, j) => {
+    const theta = (i / stacks) * Math.PI;
+    const phi = (j / slices) * Math.PI * 2;
+    const n = [Math.sin(theta) * Math.cos(phi), Math.cos(theta), Math.sin(theta) * Math.sin(phi)];
+    return { p: [radius * n[0], -radius + radius * n[1], radius * n[2]], n };
+  };
+  for (let i = 0; i < stacks; i++) for (let j = 0; j < slices; j++) {
+    const a = point(i, j), b = point(i + 1, j), c = point(i + 1, j + 1), d = point(i, j + 1);
+    for (const vertex of [a, c, b, a, d, c]) {
+      positions.push(...vertex.p);
+      normals.push(...vertex.n);
+    }
+  }
+  return { positions: new Float32Array(positions), normals: new Float32Array(normals), count: positions.length / 3, height: radius * 2, radius };
+}
+
 export function donutMesh() {
   const major = 0.082;
   const tube = 0.043;

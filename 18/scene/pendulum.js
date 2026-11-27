@@ -1,9 +1,9 @@
 import { Beams, STRIDE } from "./beams.js";
 import { crystal } from "./crystal.js";
-import { diamondMesh, donutMesh, parseOBJ } from "./forms.js";
+import { diamondMesh, donutMesh, parseOBJ, sphereMesh } from "./forms.js?v=glass-grab-10";
 import { Follow, Osc, orient } from "./motion.js";
 import { SCENE, SUN, sunlit } from "./scene.js";
-import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_FS } from "./shaders.js";
+import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_FS } from "./shaders.js?v=glass-grab-10";
 const MAX_DPR = 2;
 const MAX_DT_S = 1 / 20;
 const PERIOD_S = 2.8; // change swing period here
@@ -21,8 +21,7 @@ const SEEN_TAU_S = 0.07;
 const MAX_TWIST_RAD = 4;
 const FOLLOW_W = 16;
 const TWIST_KICK = 0.25;
-const TAP_SPIN = 2.4;
-const KEY_PUSH = 0.45;
+const RELEASE_TWIST_LIMIT = 2.4;
 const LINK_M = 0.011;
 const DOTS = 7;
 const SETTLE = 1e-4;
@@ -55,7 +54,8 @@ const SHADOW_QUADS = 1;
 const LINE_QUADS = SHADOW_QUADS * 2;
 const PENUMBRA_PX = 1.3;
 const FORM_FILES = { skull: "skull.obj", duck: "duck.obj", hand: "hand.obj", astronaut: "astronaut.obj" };
-const SURFACES = ["Shell", "Grapefruit", "Porcelain", "Egg", "Chocolate", "Obsidian", "Bronze", "Iridescent", "Glass"];
+const FORM_SCALE = 1.32;
+const FORM_SURFACE = 8;
 export class Pendulum {
     canvas;
     gl;
@@ -83,8 +83,9 @@ export class Pendulum {
     formHeight = 0.43;
     formRadius = 0.16;
     formCache = new Map();
+    activeForm = null;
+    activeFormName = "";
     shapeName = "diamond";
-    surfaceName = "Iridescent";
     spotVao;
     glintVao;
     glintBuf;
@@ -185,6 +186,7 @@ export class Pendulum {
         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
         this.formCache.set("diamond", diamondMesh(this.c));
         this.formCache.set("donut", donutMesh());
+        this.formCache.set("sphere", sphereMesh());
         this.installForm(this.formCache.get("diamond"));
         // SPOTS
         this.spotVao = gl.createVertexArray();
@@ -260,15 +262,12 @@ export class Pendulum {
         };
         canvas.addEventListener("webglcontextlost", onLost);
         this.cleanups.push(() => canvas.removeEventListener("webglcontextlost", onLost));
-        this.setShape("skull");
+        this.setShape("sphere");
     }
     // PUBLIC
-    spin(dir = 1) {
-        this.kick(0, 0, TAP_SPIN * dir);
-    }
     setShape(name) {
         if (name === this.shapeName) return;
-        if (name !== "diamond" && name !== "donut" && !FORM_FILES[name]) return;
+        if (name !== "sphere" && name !== "diamond" && name !== "donut" && !FORM_FILES[name]) return;
         this.shapeName = name;
         const cached = this.formCache.get(name);
         if (cached) this.installForm(cached);
@@ -277,7 +276,7 @@ export class Pendulum {
             fetch(url).then((response) => {
                 if (!response.ok) throw new Error(`Could not load ${name}`);
                 return response.text();
-            }).then((text) => parseOBJ(text, name === "skull" ? 0.43 : 0.38, name === "astronaut" ? 0.32 : 0.38))
+            }).then((text) => parseOBJ(text, name === "skull" ? 0.49 : 0.45, name === "astronaut" ? 0.40 : 0.45))
               .then((form) => {
                   this.formCache.set(name, form);
                   if (this.shapeName === name) this.installForm(form);
@@ -290,17 +289,16 @@ export class Pendulum {
         }
         this.wake();
     }
-    setSurface(name) {
-        if (!SURFACES.includes(name)) return;
-        this.surfaceName = name;
-        this.wake();
-    }
     installForm(form) {
         if (!form) return;
         const gl = this.gl;
         const packed = new Float32Array(form.count * 6);
         for (let i = 0; i < form.count; i++) {
-            packed.set(form.positions.subarray(i * 3, i * 3 + 3), i * 6);
+            packed.set([
+                form.positions[i * 3] * FORM_SCALE,
+                form.positions[i * 3 + 1] * FORM_SCALE,
+                form.positions[i * 3 + 2] * FORM_SCALE,
+            ], i * 6);
             packed.set(form.normals.subarray(i * 3, i * 3 + 3), i * 6 + 3);
         }
         gl.bindVertexArray(this.formVao);
@@ -308,12 +306,11 @@ export class Pendulum {
         gl.bufferData(gl.ARRAY_BUFFER, packed, gl.DYNAMIC_DRAW);
         gl.bindVertexArray(null);
         this.formCount = form.count;
-        this.formHeight = form.height;
-        this.formRadius = form.radius;
+        this.formHeight = form.height * FORM_SCALE;
+        this.formRadius = form.radius * FORM_SCALE;
+        this.activeForm = form;
+        this.activeFormName = this.shapeName;
         this.wake();
-    }
-    usesQuartz() {
-        return this.shapeName === "diamond" && this.surfaceName === "Glass";
     }
     size(width, height, dpr) {
         this.rect.width = width || 1;
@@ -451,7 +448,40 @@ export class Pendulum {
     angle(x, y) {
         return Math.atan2(this.worldX(x), this.pivotY - this.worldY(y));
     }
+    hitTest(cx, cy) {
+        const form = this.activeForm;
+        if (!form || this.activeFormName !== this.shapeName || !this.rect.width || !this.rect.height) return false;
+        const p = form.positions;
+        const r = this.rot;
+        const at = this.at;
+        const m = this.vp;
+        const project = (i) => {
+            const x = p[i] * FORM_SCALE;
+            const y = p[i + 1] * FORM_SCALE;
+            const z = p[i + 2] * FORM_SCALE;
+            const wx = r[0] * x + r[3] * y + r[6] * z + at[0];
+            const wy = r[1] * x + r[4] * y + r[7] * z + at[1];
+            const wz = r[2] * x + r[5] * y + r[8] * z + at[2];
+            const clipX = m[0] * wx + m[4] * wy + m[8] * wz + m[12];
+            const clipY = m[1] * wx + m[5] * wy + m[9] * wz + m[13];
+            const clipW = m[3] * wx + m[7] * wy + m[11] * wz + m[15];
+            if (clipW <= 0) return null;
+            return [(clipX / clipW * 0.5 + 0.5) * this.rect.width, (0.5 - clipY / clipW * 0.5) * this.rect.height];
+        };
+        for (let i = 0; i < form.count * 3; i += 9) {
+            const a = project(i), b = project(i + 3), c = project(i + 6);
+            if (!a || !b || !c) continue;
+            const den = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1]);
+            if (Math.abs(den) < 1e-6) continue;
+            const wa = ((b[1] - c[1]) * (cx - c[0]) + (c[0] - b[0]) * (cy - c[1])) / den;
+            const wb = ((c[1] - a[1]) * (cx - c[0]) + (a[0] - c[0]) * (cy - c[1])) / den;
+            const wc = 1 - wa - wb;
+            if (wa >= -1e-4 && wb >= -1e-4 && wc >= -1e-4) return true;
+        }
+        return false;
+    }
     down(x, y, ms) {
+        if (!this.hitTest(x, y)) return false;
         const t = this.t;
         const rm = this.reducedMotion;
         this.fx.x = this.ax;
@@ -464,6 +494,7 @@ export class Pendulum {
         this.pw = 0;
         this.held = true;
         this.wake();
+        return true;
     }
     // DRAG
     // held stone follows the pointer angle round the pivot, any number of turns
@@ -481,7 +512,7 @@ export class Pendulum {
         }
         this.wake();
     }
-    up(x, tap, ms) {
+    up(ms) {
         if (!this.held)
             return;
         this.held = false;
@@ -498,23 +529,8 @@ export class Pendulum {
         this.th = wrap(this.fx.x - idle(t, IDLE.x, 0));
         this.om = clamp(w - idleV(t, IDLE.x, 0), MAX_W_RAD_S);
         this.sz.set(t, this.fz.x - idle(t, IDLE.z, 1), this.fz.v - idleV(t, IDLE.z, 1));
-        let spin = clamp(w * TWIST_KICK, TAP_SPIN);
-        if (tap) {
-            const side = this.worldX(x) - this.at[0];
-            spin += TAP_SPIN * (side >= 0 ? 1 : -1);
-        }
+        const spin = clamp(w * TWIST_KICK, RELEASE_TWIST_LIMIT);
         this.kick(0, 0, spin);
-    }
-    key(k) {
-        if (k === "ArrowLeft" || k === "ArrowRight")
-            this.kick(k === "ArrowLeft" ? -KEY_PUSH : KEY_PUSH, 0, 0);
-        else if (k === "ArrowUp" || k === "ArrowDown")
-            this.kick(0, k === "ArrowUp" ? -KEY_PUSH : KEY_PUSH, 0);
-        else if (k === "Enter" || k === " ")
-            this.spin();
-        else
-            return false;
-        return true;
     }
     kick(vx, vz, vt) {
         if (this.held || this.reducedMotion)
@@ -623,16 +639,9 @@ export class Pendulum {
         this.eye[1] = r[3] * ex + r[4] * ey + r[5] * ez;
         this.eye[2] = r[6] * ex + r[7] * ey + r[8] * ez;
         this.see(dt);
-        if (this.usesQuartz()) {
-            this.beams.trace(this.ax, this.az, this.twist, this.at, dt);
-            const bd = this.beams.data;
-            for (let i = 0; i < this.beams.count; i++) bd[i * STRIDE + 5] *= this.seen;
-        } else {
-            this.beams.count = 0;
-            this.glintN = 0;
-        }
+        this.beams.count = 0;
+        this.glintN = 0;
         this.thread(py);
-        if (this.usesQuartz()) this.sparkle();
         return moving;
     }
     // GLINTS
@@ -697,7 +706,7 @@ export class Pendulum {
     // wall light gated on the stone being in view, below its pivot and in sun; eased
     see(dt) {
         const r = this.rot;
-        const h = (this.usesQuartz() ? this.c.height : this.formHeight) * 0.45;
+        const h = this.formHeight * 0.45;
         const cx = this.at[0] - r[3] * h;
         const cy = this.at[1] - r[4] * h;
         const cz = this.at[2] - r[5] * h;
@@ -835,13 +844,10 @@ export class Pendulum {
         gl.uniformMatrix4fv(u.sVP, false, this.vp);
         gl.uniformMatrix3fv(u.sRot, false, this.rot);
         gl.uniform3fv(u.sPos, this.at);
-        const quartz = this.usesQuartz();
         const formReady = this.formCount > 0;
-        const activeVao = !quartz && formReady ? this.formVao : this.crystalVao;
-        const activeCount = !quartz && formReady ? this.formCount : this.c.tris * 3;
-        gl.bindVertexArray(activeVao);
+        gl.bindVertexArray(this.formVao);
         gl.disable(gl.CULL_FACE);
-        gl.drawArrays(gl.TRIANGLES, 0, activeCount);
+        if (formReady) gl.drawArrays(gl.TRIANGLES, 0, this.formCount);
         gl.useProgram(this.lineP);
         gl.uniformMatrix4fv(u.lVP, false, this.vp);
         gl.bindVertexArray(this.lineVao);
@@ -868,40 +874,10 @@ export class Pendulum {
         gl.enable(gl.SCISSOR_TEST);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         gl.disable(gl.SCISSOR_TEST);
-        if (quartz) {
-            // The reference diamond retains its original refraction, caustics, and glints.
-            gl.useProgram(this.causticP);
-            gl.uniformMatrix4fv(u.kVP, false, this.vp);
-            gl.uniformMatrix3fv(u.kRot, false, this.rot);
-            gl.uniform3fv(u.kPos, this.at);
-            const px = (2 * this.half[1]) / this.canvas.height;
-            gl.uniform1f(u.kPx, px * px);
-            gl.bindVertexArray(this.crystalVao);
-            gl.drawArraysInstanced(gl.TRIANGLES, 0, this.c.tris * 3, 3);
-            const n = this.beams.count;
-            const d = this.beams.data;
-            this.sparks(d, n * STRIDE);
-            gl.useProgram(this.spotP);
-            gl.uniformMatrix4fv(u.pVP, false, this.vp);
-            gl.bindVertexArray(this.spotVao);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.spotBuf);
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, d, 0, (n + DOTS) * STRIDE);
-            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n + DOTS);
-        }
         gl.useProgram(this.lineP);
         gl.bindVertexArray(this.lineVao);
         gl.drawArrays(gl.TRIANGLES, SHADOW_QUADS * 6, (LINE_QUADS - SHADOW_QUADS) * 6);
-        if (quartz) {
-            gl.enable(gl.CULL_FACE);
-            gl.useProgram(this.crystalP);
-            gl.uniformMatrix4fv(u.cVP, false, this.vp);
-            gl.uniformMatrix3fv(u.cRot, false, this.rot);
-            gl.uniform3fv(u.cPos, this.at);
-            gl.uniform3fv(u.cEye, this.eye);
-            gl.uniform2fv(u.cHalf, this.half);
-            gl.bindVertexArray(this.crystalVao);
-            gl.drawArrays(gl.TRIANGLES, 0, this.c.tris * 3);
-        } else if (formReady) {
+        if (formReady) {
             gl.disable(gl.CULL_FACE);
             gl.enable(gl.DEPTH_TEST);
             gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -910,7 +886,7 @@ export class Pendulum {
             gl.uniformMatrix3fv(u.fRot, false, this.rot);
             gl.uniform3fv(u.fPos, this.at);
             gl.uniform3f(u.fEye, 0, 0, this.dist);
-            gl.uniform1i(u.fSurface, SURFACES.indexOf(this.surfaceName));
+            gl.uniform1i(u.fSurface, FORM_SURFACE);
             gl.uniform1f(u.fTime, this.t);
             gl.bindVertexArray(this.formVao);
             gl.drawArrays(gl.TRIANGLES, 0, this.formCount);
@@ -974,7 +950,7 @@ export class Pendulum {
         const at = this.at;
         const k = SCENE.crystalZ / -SUN[2];
         const ka = at[2] / -SUN[2];
-        const h = this.usesQuartz() ? this.c.height : this.formHeight;
+        const h = this.formHeight;
         const tz = at[2] - r[5] * h;
         const kt = tz / -SUN[2];
         const x0 = SUN[0] * k;
@@ -983,7 +959,7 @@ export class Pendulum {
         const y1 = at[1] + SUN[1] * ka;
         const x2 = at[0] - r[3] * h + SUN[0] * kt;
         const y2 = at[1] - r[4] * h + SUN[1] * kt;
-        const pad = (this.usesQuartz() ? this.c.radius : this.formRadius) * 1.8 + 0.04;
+        const pad = this.formRadius * 1.8 + 0.04;
         const w = this.canvas.width;
         const hh = this.canvas.height;
         const sx = w / (2 * this.half[0]);

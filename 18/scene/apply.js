@@ -6,19 +6,13 @@ export function apply(p, m) {
     else if (m.t === "motion")
         p.motion(m.v);
     else if (m.t === "down")
-        p.down(m.x, m.y, m.ms);
+        return p.down(m.x, m.y, m.ms);
     else if (m.t === "move")
         p.move(m.x, m.y, m.ms);
     else if (m.t === "up")
-        p.up(m.x, m.tap, m.ms);
-    else if (m.t === "key")
-        p.key(m.k);
-    else if (m.t === "spin")
-        p.spin();
+        p.up(m.ms);
     else if (m.t === "shape")
         p.setShape(m.v);
-    else if (m.t === "surface")
-        p.setSurface(m.v);
     else if (m.t === "dispose")
         p.dispose();
 }
