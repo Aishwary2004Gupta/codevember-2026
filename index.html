@@ -3,28 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#e7ece5">
-  <meta name="description" content="Thirty prompts, four live studies, and a month of making something every day.">
-  <title>Codevember 2026 — A month in motion</title>
+  <meta name="theme-color" content="#f3f0e8">
+  <meta name="description" content="Thirty daily Codevember prompts, with live studies from November 2026.">
+  <title>Codevember 2026 — Prompt Index</title>
   <style>
     :root {
       color-scheme: light;
-      --paper: #e7ece5;
-      --paper-high: #f0f3ed;
-      --ink: #202a23;
-      --muted: #727e73;
-      --line: rgba(32, 42, 35, .2);
-      --line-strong: rgba(32, 42, 35, .58);
-      --accent: #c85f43;
-      --accent-soft: #f0d8ce;
-      --tile: #dfe7dd;
-      --button: #25352b;
-      --button-ink: #f1f3ed;
-      --display: Georgia, "Times New Roman", serif;
-      --ui: Arial, Helvetica, sans-serif;
-      font-family: var(--ui);
+      --bg: #f3f0e8;
+      --ink: #24231f;
+      --muted: #77746c;
+      --rule: #d3cfc4;
+      --rule-strong: #8b877d;
+      --accent: #994832;
+      --accent-soft: rgba(153, 72, 50, .15);
+      --preview-bg: #e4dfd4;
+      --toggle-bg: transparent;
+      --toggle-border: #c9c4b8;
+      --sans: Arial, Helvetica, sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+      font-family: var(--sans);
       color: var(--ink);
-      background: var(--paper);
+      background: var(--bg);
       font-synthesis: none;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
@@ -33,362 +32,131 @@
 
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --paper: #1c211e;
-      --paper-high: #242b26;
-      --ink: #ecf0e9;
-      --muted: #a2ada2;
-      --line: rgba(226, 235, 224, .2);
-      --line-strong: rgba(226, 235, 224, .6);
-      --accent: #e58a6c;
-      --accent-soft: #4a3029;
-      --tile: #252d28;
-      --button: #dce7dc;
-      --button-ink: #1c211e;
+      --bg: #1c2420;
+      --ink: #e8ece6;
+      --muted: #a6b0a7;
+      --rule: #414d45;
+      --rule-strong: #68756a;
+      --accent: #eb9275;
+      --accent-soft: rgba(235, 146, 117, .2);
+      --preview-bg: #27322c;
+      --toggle-bg: #27312b;
+      --toggle-border: #4b584e;
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html, body { min-width: 320px; min-height: 100%; margin: 0; }
     body {
-      min-width: 320px;
-      margin: 0;
+      min-height: 100vh;
+      padding: 16px 24px 24px;
       overflow-x: hidden;
       background:
-        radial-gradient(ellipse at 82% 16%, rgba(255,255,255,.3), transparent 34rem),
-        var(--paper);
+        radial-gradient(ellipse at 50% -28%, rgba(255,255,255,.38), transparent 58%),
+        var(--bg);
       color: var(--ink);
-      transition: background-color .35s ease, color .35s ease;
+      transition: background-color .3s ease, color .3s ease;
+    }
+    :root[data-theme="dark"] body {
+      background:
+        radial-gradient(ellipse at 50% -28%, rgba(110,133,115,.12), transparent 58%),
+        var(--bg);
     }
 
-    button, a { font: inherit; }
-    a { color: inherit; }
-
-    .scroll-line {
-      position: fixed;
-      z-index: 10;
-      inset: 0 0 auto;
-      height: 3px;
-      background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left center;
-      pointer-events: none;
-    }
-
-    .page {
-      width: min(1480px, calc(100% - 72px));
-      margin: 0 auto;
-    }
-
+    .page { width: 100%; margin: 0 auto; }
     .masthead {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      min-height: 64px;
-      border-bottom: 1px solid var(--line);
-      animation: settle-in .7s both;
+      min-height: 34px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rule);
+      animation: appear .5s both;
     }
-
-    .wordmark, .masthead-note, .masthead-date, .eyebrow, .section-kicker,
-    .column-label, .day-number, .day-state, .hero-count-label, .footer-note {
+    .brand, .masthead-center, .live-total, .theme-toggle, .column-range, .column-action,
+    .row-number, .row-state {
       font-family: "Courier New", Courier, monospace;
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: .16em;
-      line-height: 1.4;
+      letter-spacing: .15em;
+      line-height: 1.2;
       text-transform: uppercase;
     }
-
-    .wordmark {
+    .brand {
       display: inline-flex;
-      width: max-content;
+      align-items: center;
       gap: 8px;
-      align-items: center;
+      width: max-content;
       text-decoration: none;
     }
-    .wordmark-mark {
-      width: 8px;
-      height: 8px;
+    .brand-mark {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
+      box-shadow: 0 0 0 3px var(--accent-soft);
     }
-    .masthead-note { justify-self: center; color: var(--muted); }
-    .masthead-right {
+    .masthead-center { color: var(--muted); font-size: 9px; }
+    .masthead-end {
       display: flex;
+      align-items: center;
       justify-self: end;
-      align-items: center;
-      gap: 22px;
+      gap: 16px;
     }
-    .masthead-date { color: var(--muted); }
+    .live-total { color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .live-total strong { color: var(--accent); font-weight: 700; }
     .theme-toggle {
-      display: grid;
-      width: 34px;
-      height: 34px;
-      place-items: center;
-      border: 1px solid var(--line);
-      border-radius: 50%;
-      background: transparent;
-      color: var(--ink);
-      cursor: pointer;
-      transition: transform .25s ease, background-color .25s ease, border-color .25s ease;
-    }
-    .theme-toggle:hover { transform: rotate(-12deg); background: var(--tile); }
-    .theme-toggle:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
-    .theme-toggle svg { width: 15px; height: 15px; }
-    :root:not([data-theme="dark"]) .icon-sun,
-    :root[data-theme="dark"] .icon-moon { display: none; }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(260px, .56fr);
-      gap: clamp(32px, 7vw, 116px);
-      align-items: center;
-      min-height: min(640px, 74vh);
-      padding: clamp(64px, 9vh, 110px) 0 clamp(58px, 8vh, 96px);
-      border-bottom: 1px solid var(--line-strong);
-    }
-    .hero-copy { max-width: 880px; }
-    .eyebrow {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 0 0 24px;
-      color: var(--muted);
-      animation: settle-in .65s .08s both;
-    }
-    .eyebrow::before {
-      width: 24px;
-      height: 1px;
-      background: var(--accent);
-      content: "";
-    }
-    h1 {
-      margin: 0;
-      font-family: var(--display);
-      font-size: clamp(76px, 11vw, 164px);
-      font-weight: 400;
-      letter-spacing: -.085em;
-      line-height: .78;
-    }
-    .title-line {
-      display: block;
-      overflow: hidden;
-      padding: .06em .12em .12em 0;
-    }
-    .title-line span {
-      display: inline-block;
-      transform: translateY(112%);
-      animation: title-rise .95s cubic-bezier(.18,.75,.25,1) both;
-    }
-    .title-line:nth-child(2) span { animation-delay: .14s; }
-    .title-line em {
-      color: var(--accent);
-      font-weight: 400;
-      font-style: italic;
-    }
-    .hero-description {
-      max-width: 390px;
-      margin: 34px 0 0 7px;
-      color: var(--muted);
-      font-family: var(--display);
-      font-size: clamp(18px, 1.7vw, 24px);
-      font-style: italic;
-      line-height: 1.3;
-      animation: settle-in .8s .42s both;
-    }
-    .hero-foot {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin: 36px 0 0 7px;
-      animation: settle-in .8s .52s both;
-    }
-    .hero-cta {
       display: inline-flex;
       align-items: center;
-      gap: 12px;
-      width: max-content;
-      padding: 11px 15px;
+      gap: 7px;
+      min-height: 28px;
+      padding: 0 9px;
+      border: 1px solid var(--toggle-border);
       border-radius: 999px;
-      background: var(--button);
-      color: var(--button-ink);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-decoration: none;
-      text-transform: uppercase;
-      transition: transform .25s ease, background-color .25s ease;
-    }
-    .hero-cta:hover { transform: translateY(-3px); background: var(--accent); }
-    .hero-cta span { font-size: 16px; font-weight: 400; line-height: .7; }
-    .hero-foot-note { color: var(--muted); font-size: 11px; letter-spacing: .04em; }
-
-    .hero-art {
-      position: relative;
-      width: min(100%, 440px);
-      justify-self: end;
-      aspect-ratio: 1 / 1.04;
-      animation: settle-in .9s .2s both;
-    }
-    .art-frame {
-      position: absolute;
-      inset: 6% 4% 8% 8%;
-      border: 1px solid var(--line);
-      border-radius: 48% 52% 49% 51% / 48% 46% 54% 52%;
-      transform: rotate(-13deg);
-    }
-    .art-frame::before, .art-frame::after {
-      position: absolute;
-      inset: 9%;
-      border: 1px solid var(--line);
-      border-radius: inherit;
-      content: "";
-      transform: rotate(27deg);
-    }
-    .art-frame::after {
-      inset: 21%;
-      border-color: var(--line-strong);
-      transform: rotate(-42deg);
-    }
-    .art-cross {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-    }
-    .art-cross::before, .art-cross::after {
-      position: absolute;
-      width: 74%;
-      height: 1px;
-      background: var(--line);
-      content: "";
-      transform: rotate(-34deg);
-    }
-    .art-cross::after { transform: rotate(56deg); }
-    .orbit-svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-    .orbit-path {
-      fill: none;
-      stroke: var(--accent);
-      stroke-width: 1.6;
-      stroke-dasharray: 1 8;
-      stroke-linecap: round;
-      opacity: .72;
-    }
-    .orbit-dot { fill: var(--accent); }
-    .art-core {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      display: grid;
-      width: 104px;
-      aspect-ratio: 1;
-      place-items: center;
-      border-radius: 50%;
-      background: var(--paper-high);
-      box-shadow: 0 0 0 1px var(--line), 0 12px 36px rgba(34, 48, 37, .09);
-      transform: translate(-50%, -50%);
-      transition: background-color .35s ease;
-    }
-    .art-core span {
-      color: var(--accent);
-      font-family: var(--display);
-      font-size: 44px;
-      font-style: italic;
-      line-height: 1;
-    }
-    .art-caption {
-      position: absolute;
-      right: -3%;
-      bottom: 12%;
-      display: grid;
-      gap: 5px;
-      padding: 10px 13px;
-      background: var(--paper);
-      color: var(--muted);
-      animation: caption-float 5s ease-in-out infinite;
-    }
-    .hero-count-label { font-size: 9px; }
-    .hero-count {
+      background: var(--toggle-bg);
       color: var(--ink);
-      font-family: var(--display);
-      font-size: 28px;
-      line-height: 1;
+      font-size: 8px;
+      letter-spacing: .12em;
+      cursor: pointer;
+      transition: background-color .25s ease, border-color .25s ease, color .25s ease;
     }
-    .hero-count small { margin-left: 5px; color: var(--muted); font-family: var(--ui); font-size: 10px; }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .theme-toggle:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .theme-icon { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 
-    .index-section { padding: 46px 0 70px; }
-    .index-head {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      align-items: end;
-      gap: 24px;
-      margin-bottom: 26px;
-    }
-    .section-kicker { margin: 0 0 7px; color: var(--muted); }
-    .index-title {
-      margin: 0;
-      font-family: var(--display);
-      font-size: clamp(34px, 5vw, 58px);
-      font-weight: 400;
-      letter-spacing: -.055em;
-      line-height: 1;
-    }
-    .index-summary {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 11px;
-      white-space: nowrap;
-    }
-    .summary-count {
-      color: var(--accent);
-      font-family: var(--display);
-      font-size: 28px;
-      font-style: italic;
-    }
-    .index-rule {
-      height: 1px;
-      margin-bottom: 24px;
-      background: var(--line-strong);
-      transform: scaleX(0);
-      transform-origin: left;
-      animation: rule-draw .8s .2s ease forwards;
-    }
-    .prompt-columns {
+    .columns {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: clamp(22px, 4vw, 64px);
+      gap: clamp(28px, 4.1vw, 78px);
     }
-    .prompt-column { min-width: 0; }
-    .column-label {
+    .column { min-width: 0; }
+    .column-heading {
       display: flex;
+      align-items: center;
       justify-content: space-between;
-      margin: 0 0 4px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 9px;
+      min-height: 27px;
+      margin: 0 0 2px;
+      padding: 0 0 9px;
+      border-bottom: 1px solid var(--rule-strong);
+      animation: appear .55s both;
     }
-    .column-label span:last-child { color: var(--accent); }
+    .column-range, .column-action { color: var(--muted); font-size: 9px; }
+    .column-action { color: var(--accent); }
 
-    .day {
+    .row {
       position: relative;
       display: grid;
       grid-template-columns: 32px minmax(0, 1fr) auto;
-      min-height: 48px;
+      min-height: 55px;
       align-items: center;
-      gap: 9px;
-      border-bottom: 1px solid var(--line);
+      gap: 10px;
+      border-bottom: 1px solid var(--rule);
+      color: var(--ink);
       text-decoration: none;
-      transition: color .25s ease, transform .25s ease, opacity .5s ease;
+      animation: row-in .45s both;
+      animation-delay: var(--delay, 0ms);
     }
-    .day::after {
+    .row::after {
       position: absolute;
       right: 0;
       bottom: -1px;
@@ -398,140 +166,122 @@
       content: "";
       transform: scaleX(0);
       transform-origin: left;
-      transition: transform .32s cubic-bezier(.2,.7,.2,1);
+      transition: transform .3s cubic-bezier(.2,.7,.2,1);
     }
-    .day:hover { color: var(--accent); transform: translateX(4px); }
-    .day:hover::after { transform: scaleX(1); }
-    .day-number {
+    .row-number {
       color: var(--muted);
       font-size: 9px;
-      letter-spacing: .06em;
       font-weight: 400;
+      letter-spacing: .08em;
       font-variant-numeric: tabular-nums;
+      transition: color .25s ease;
     }
-    .day-title {
+    .row-title {
       overflow: hidden;
-      font-family: var(--display);
-      font-size: clamp(20px, 2.1vw, 29px);
+      font-family: var(--serif);
+      font-size: clamp(25px, 2.55vw, 37px);
       font-weight: 400;
-      letter-spacing: -.045em;
+      letter-spacing: -.055em;
       line-height: 1;
       text-overflow: ellipsis;
       white-space: nowrap;
-      transition: transform .25s ease;
+      transition: color .25s ease, transform .25s ease;
     }
-    .day-state {
+    .row-state {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       color: var(--muted);
       font-size: 8px;
-      letter-spacing: .1em;
+      font-weight: 400;
+      letter-spacing: .12em;
       white-space: nowrap;
+      transition: color .25s ease;
     }
-    .day-state::before {
-      width: 5px;
-      height: 5px;
+    .state-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: currentColor;
-      opacity: .35;
-      content: "";
+      opacity: .5;
     }
-    .day--live .day-state { color: var(--accent); }
-    .day--live .day-state::before { opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
-    .day-arrow {
+    .row--live .row-state { color: var(--accent); font-weight: 700; }
+    .row--live .state-dot { opacity: 1; box-shadow: 0 0 0 3px var(--accent-soft); }
+    .row-arrow {
       display: inline-block;
-      font-family: var(--ui);
+      margin-left: 2px;
+      font-family: var(--sans);
       font-size: 13px;
+      line-height: .8;
       transition: transform .25s ease;
     }
-    .day:hover .day-arrow { transform: translate(2px, -2px); }
-    .day--soon { cursor: default; }
-    .day--soon:hover { color: var(--ink); transform: none; }
-    .day--soon:hover::after { transform: scaleX(0); }
+    .row--live:hover .row-title, .row--live:focus-visible .row-title {
+      color: var(--accent);
+      transform: translateX(6px);
+    }
+    .row--live:hover .row-number, .row--live:focus-visible .row-number { color: var(--accent); }
+    .row--live:hover::after, .row--live:focus-visible::after { transform: scaleX(1); }
+    .row--live:hover .row-arrow, .row--live:focus-visible .row-arrow { transform: translate(2px, -2px); }
+    .row--soon { cursor: default; }
+    .row--soon .row-state { font-size: 8px; }
+    .row--soon .row-state::after {
+      content: "";
+      width: 0;
+      transition: width .25s ease;
+    }
 
-    .motion-ready .day {
+    .scene-preview {
+      position: fixed;
+      z-index: 20;
+      top: 0;
+      left: 0;
+      width: min(360px, calc(100vw - 32px));
+      aspect-ratio: 1.48;
+      overflow: hidden;
+      border: 1px solid var(--rule-strong);
+      background: var(--preview-bg);
+      box-shadow: 0 16px 48px rgba(13, 20, 15, .22);
       opacity: 0;
-      transform: translateY(12px);
+      pointer-events: none;
+      transform: translate(var(--x, -500px), var(--y, -500px)) scale(.96);
+      transform-origin: top left;
+      transition: opacity .18s ease, transform .22s cubic-bezier(.2,.7,.2,1), background-color .25s ease;
     }
-    .motion-ready .day.is-visible {
+    .scene-preview[data-visible="true"] {
       opacity: 1;
-      transform: translateY(0);
-      transition-delay: var(--stagger, 0ms);
+      transform: translate(var(--x, 0), var(--y, 0)) scale(1);
     }
-
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 16px 0 24px;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
+    .preview-media, .preview-media img, .preview-media iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
     }
-    .footer-note { font-size: 9px; }
-    .footer-signoff { font-family: var(--display); font-size: 15px; font-style: italic; }
+    .preview-media img { object-fit: cover; }
+    .preview-media iframe { background: var(--preview-bg); }
 
-    @keyframes settle-in {
-      from { opacity: 0; transform: translateY(12px); }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes title-rise {
-      from { transform: translateY(112%); }
-      to { transform: translateY(0); }
-    }
-    @keyframes caption-float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-7px); }
-    }
-    @keyframes rule-draw {
-      to { transform: scaleX(1); }
+    @keyframes row-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 900px) {
-      .page { width: min(100% - 48px, 760px); }
-      .hero { grid-template-columns: minmax(0, 1fr) minmax(220px, .54fr); gap: 22px; min-height: 560px; }
-      .hero-art { width: 100%; }
-      .prompt-columns { gap: 24px; }
-      .day { grid-template-columns: 27px minmax(0, 1fr); }
-      .day-state { grid-column: 2; margin: -5px 0 7px; }
+    @media (max-width: 920px) {
+      .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 34px; }
+      .row-title { font-size: clamp(26px, 4vw, 36px); }
     }
-    @media (max-width: 640px) {
-      .page { width: calc(100% - 36px); }
-      .masthead { grid-template-columns: 1fr auto; min-height: 58px; }
-      .masthead-note { display: none; }
-      .masthead-right { gap: 13px; }
-      .masthead-date { font-size: 9px; }
-      .hero {
-        grid-template-columns: 1fr;
-        gap: 4px;
-        min-height: auto;
-        padding: 66px 0 44px;
-      }
-      .eyebrow { margin-bottom: 20px; }
-      h1 { font-size: clamp(72px, 17vw, 116px); }
-      .hero-description { margin-top: 26px; font-size: 19px; }
-      .hero-foot { margin-top: 25px; }
-      .hero-art {
-        width: min(78vw, 330px);
-        margin: 0 auto;
-        justify-self: center;
-      }
-      .art-core { width: 82px; }
-      .art-core span { font-size: 36px; }
-      .art-caption { right: 0; bottom: 11%; }
-      .index-section { padding-top: 35px; }
-      .index-head { grid-template-columns: 1fr; gap: 13px; }
-      .index-summary { justify-self: start; }
-      .prompt-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 18px; }
-      .day { min-height: 47px; }
-      .day-title { font-size: clamp(19px, 5.4vw, 24px); }
-      .footer { align-items: flex-start; flex-direction: column; gap: 8px; }
-    }
-    @media (max-width: 390px) {
-      .prompt-columns { grid-template-columns: 1fr; gap: 24px; }
-      .day { grid-template-columns: 32px minmax(0, 1fr) auto; }
-      .day-state { grid-column: auto; margin: 0; }
-      .hero-foot { align-items: flex-start; flex-direction: column; gap: 12px; }
+    @media (max-width: 620px) {
+      body { padding: 12px 16px 20px; }
+      .masthead { grid-template-columns: 1fr auto; margin-bottom: 12px; }
+      .masthead-center { display: none; }
+      .masthead-end { gap: 10px; }
+      .columns { grid-template-columns: 1fr; gap: 22px; }
+      .row { min-height: 53px; grid-template-columns: 34px minmax(0, 1fr) auto; }
+      .row-title { font-size: clamp(26px, 8vw, 34px); }
+      .scene-preview { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -540,143 +290,95 @@
         animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
       }
-      .motion-ready .day { opacity: 1; transform: none; }
-      .index-rule { transform: scaleX(1); }
-      .title-line span { transform: none; }
     }
   </style>
 </head>
 <body>
-  <div class="scroll-line" aria-hidden="true"></div>
   <div class="page">
     <header class="masthead">
-      <a class="wordmark" href="./" aria-label="Codevember 2026 home">
-        <span class="wordmark-mark" aria-hidden="true"></span>
-        <span>CODEVEMBER / 26</span>
+      <a class="brand" href="./" aria-label="Codevember 2026 prompt index">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>CODEVEMBER ’26</span>
       </a>
-      <span class="masthead-note">A month of daily experiments</span>
-      <div class="masthead-right">
-        <span class="masthead-date">NOV 01 — 30</span>
-        <button class="theme-toggle" type="button" aria-label="Switch to dark theme" aria-pressed="false">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M20.2 15.4A8.4 8.4 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"/>
-          </svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"/>
-            <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>
-          </svg>
+      <span class="masthead-center">THE DAILY PROMPT INDEX</span>
+      <div class="masthead-end">
+        <span class="live-total"><strong data-live-total>04</strong> / 30 LIVE</span>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+          <span class="theme-icon" aria-hidden="true"></span>
+          <span class="theme-label">DARK</span>
         </button>
       </div>
     </header>
 
-    <main>
-      <section class="hero" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <p class="eyebrow">01—30 / November 2026</p>
-          <h1 id="page-title">
-            <span class="title-line"><span>A month</span></span>
-            <span class="title-line"><span><em>in motion.</em></span></span>
-          </h1>
-          <p class="hero-description">Thirty prompts. Small worlds built one day at a time.</p>
-          <div class="hero-foot">
-            <a class="hero-cta" href="#prompt-index">Enter the index <span aria-hidden="true">↓</span></a>
-            <span class="hero-foot-note">A little making, every day.</span>
-          </div>
-        </div>
-
-        <div class="hero-art" aria-hidden="true">
-          <div class="art-frame"></div>
-          <div class="art-cross"></div>
-          <svg class="orbit-svg" viewBox="0 0 400 400">
-            <path id="orbit-course" class="orbit-path" d="M 200 38 C 300 38, 365 118, 345 214 C 327 307, 252 360, 164 343 C 69 324, 30 250, 51 163 C 70 83, 126 38, 200 38 Z"/>
-            <circle class="orbit-dot" r="7">
-              <animateMotion dur="8s" repeatCount="indefinite" rotate="auto">
-                <mpath href="#orbit-course"/>
-              </animateMotion>
-            </circle>
-          </svg>
-          <div class="art-core"><span>30</span></div>
-          <div class="art-caption">
-            <span class="hero-count-label">LIVE STUDIES</span>
-            <span class="hero-count"><span data-live-count>04</span><small>/ 30</small></span>
-          </div>
-        </div>
+    <main class="columns" aria-label="Codevember prompt index">
+      <section class="column" aria-label="Days 1 through 10">
+        <h2 class="column-heading"><span class="column-range">01—10</span><span class="column-action">BEGIN</span></h2>
+        <a class="row row--live" style="--delay:20ms" href="./01/index.html" data-preview="01/fold_preview.png" data-title="Fold" aria-label="Open day 1: Fold">
+          <span class="row-number">01</span><span class="row-title">Fold</span><span class="row-state"><i class="state-dot"></i>LIVE <span class="row-arrow">↗</span></span>
+        </a>
+        <a class="row row--live" style="--delay:55ms" href="./02/index.html" data-preview="02/shatter-preview.png" data-title="Shatter" aria-label="Open day 2: Shatter">
+          <span class="row-number">02</span><span class="row-title">Shatter</span><span class="row-state"><i class="state-dot"></i>LIVE <span class="row-arrow">↗</span></span>
+        </a>
+        <div class="row row--soon" style="--delay:90ms"><span class="row-number">03</span><span class="row-title">Melt</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:125ms"><span class="row-number">04</span><span class="row-title">Tangle</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:160ms"><span class="row-number">05</span><span class="row-title">Moss</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:195ms"><span class="row-number">06</span><span class="row-title">Orrery</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:230ms"><span class="row-number">07</span><span class="row-title">Hollow</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:265ms"><span class="row-number">08</span><span class="row-title">Tesseract</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:300ms"><span class="row-number">09</span><span class="row-title">Membrane</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon" style="--delay:335ms"><span class="row-number">10</span><span class="row-title">Caustic</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
       </section>
 
-      <section class="index-section" id="prompt-index" aria-labelledby="index-title">
-        <div class="index-head">
-          <div>
-            <p class="section-kicker">The prompt archive</p>
-            <h2 class="index-title" id="index-title">Thirty ways in.</h2>
-          </div>
-          <div class="index-summary">
-            <span class="summary-count"><span data-live-count>04</span></span>
-            <span>open studies out of 30</span>
-          </div>
-        </div>
-        <div class="index-rule" aria-hidden="true"></div>
+      <section class="column" aria-label="Days 11 through 20">
+        <h2 class="column-heading"><span class="column-range">11—20</span><span class="column-action">SHIFT</span></h2>
+        <div class="row row--soon"><span class="row-number">11</span><span class="row-title">Rust</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <a class="row row--live" href="./12/index.html" data-preview="12/peacock-open.png" data-title="Feather" aria-label="Open day 12: Feather">
+          <span class="row-number">12</span><span class="row-title">Feather</span><span class="row-state"><i class="state-dot"></i>LIVE <span class="row-arrow">↗</span></span>
+        </a>
+        <div class="row row--soon"><span class="row-number">13</span><span class="row-title">Labyrinth</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">14</span><span class="row-title">Tension</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">15</span><span class="row-title">Mirage</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">16</span><span class="row-title">Spore</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">17</span><span class="row-title">Kelp</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <a class="row row--live" href="./18/index.html" data-preview-scene="./18/index.html" data-title="Pendulum" aria-label="Open day 18: Pendulum">
+          <span class="row-number">18</span><span class="row-title">Pendulum</span><span class="row-state"><i class="state-dot"></i>LIVE <span class="row-arrow">↗</span></span>
+        </a>
+        <div class="row row--soon"><span class="row-number">19</span><span class="row-title">Erosion</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">20</span><span class="row-title">Cocoon</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+      </section>
 
-        <div class="prompt-columns" role="list" aria-label="Thirty Codevember prompts">
-          <section class="prompt-column" aria-label="Days 1 through 10">
-            <h3 class="column-label"><span>01—10</span><span>BEGIN</span></h3>
-            <a class="day day--live" role="listitem" href="01/" aria-label="Open day 1, Fold"><span class="day-number">01</span><span class="day-title">Fold</span><span class="day-state">LIVE <span class="day-arrow">↗</span></span></a>
-            <a class="day day--live" role="listitem" href="02/" aria-label="Open day 2, Shatter"><span class="day-number">02</span><span class="day-title">Shatter</span><span class="day-state">LIVE <span class="day-arrow">↗</span></span></a>
-            <article class="day day--soon" role="listitem"><span class="day-number">03</span><span class="day-title">Melt</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">04</span><span class="day-title">Tangle</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">05</span><span class="day-title">Moss</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">06</span><span class="day-title">Orrery</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">07</span><span class="day-title">Hollow</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">08</span><span class="day-title">Tesseract</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">09</span><span class="day-title">Membrane</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">10</span><span class="day-title">Caustic</span><span class="day-state">SOON</span></article>
-          </section>
-
-          <section class="prompt-column" aria-label="Days 11 through 20">
-            <h3 class="column-label"><span>11—20</span><span>SHIFT</span></h3>
-            <article class="day day--soon" role="listitem"><span class="day-number">11</span><span class="day-title">Rust</span><span class="day-state">SOON</span></article>
-            <a class="day day--live" role="listitem" href="12/" aria-label="Open day 12, Feather"><span class="day-number">12</span><span class="day-title">Feather</span><span class="day-state">LIVE <span class="day-arrow">↗</span></span></a>
-            <article class="day day--soon" role="listitem"><span class="day-number">13</span><span class="day-title">Labyrinth</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">14</span><span class="day-title">Tension</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">15</span><span class="day-title">Mirage</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">16</span><span class="day-title">Spore</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">17</span><span class="day-title">Kelp</span><span class="day-state">SOON</span></article>
-            <a class="day day--live" role="listitem" href="18/" aria-label="Open day 18, Pendulum"><span class="day-number">18</span><span class="day-title">Pendulum</span><span class="day-state">LIVE <span class="day-arrow">↗</span></span></a>
-            <article class="day day--soon" role="listitem"><span class="day-number">19</span><span class="day-title">Erosion</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">20</span><span class="day-title">Cocoon</span><span class="day-state">SOON</span></article>
-          </section>
-
-          <section class="prompt-column" aria-label="Days 21 through 30">
-            <h3 class="column-label"><span>21—30</span><span>REPEAT</span></h3>
-            <article class="day day--soon" role="listitem"><span class="day-number">21</span><span class="day-title">Bolt</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">22</span><span class="day-title">Echo</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">23</span><span class="day-title">Magma</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">24</span><span class="day-title">Nest</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">25</span><span class="day-title">Veil</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">26</span><span class="day-title">Anamorph</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">27</span><span class="day-title">Burrow</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">28</span><span class="day-title">Hive</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">29</span><span class="day-title">Portal</span><span class="day-state">SOON</span></article>
-            <article class="day day--soon" role="listitem"><span class="day-number">30</span><span class="day-title">Dissolve</span><span class="day-state">SOON</span></article>
-          </section>
-        </div>
+      <section class="column" aria-label="Days 21 through 30">
+        <h2 class="column-heading"><span class="column-range">21—30</span><span class="column-action">REPEAT</span></h2>
+        <div class="row row--soon"><span class="row-number">21</span><span class="row-title">Bolt</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">22</span><span class="row-title">Echo</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">23</span><span class="row-title">Magma</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">24</span><span class="row-title">Nest</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">25</span><span class="row-title">Veil</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">26</span><span class="row-title">Anamorph</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">27</span><span class="row-title">Burrow</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">28</span><span class="row-title">Hive</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">29</span><span class="row-title">Portal</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
+        <div class="row row--soon"><span class="row-number">30</span><span class="row-title">Dissolve</span><span class="row-state"><i class="state-dot"></i>SOON</span></div>
       </section>
     </main>
+  </div>
 
-    <footer class="footer">
-      <span class="footer-note">CODEVEMBER 2026 / AN OPEN NOTEBOOK</span>
-      <span class="footer-signoff">Made a little at a time.</span>
-    </footer>
+  <div class="scene-preview" data-visible="false" aria-hidden="true">
+    <div class="preview-media"></div>
   </div>
 
   <script>
     const root = document.documentElement;
     const themeButton = document.querySelector(".theme-toggle");
-    const scrollLine = document.querySelector(".scroll-line");
-    const liveCount = document.querySelectorAll("[data-live-count]");
-    const liveProjects = document.querySelectorAll(".day--live").length;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const themeLabel = document.querySelector(".theme-label");
+    const preview = document.querySelector(".scene-preview");
+    const previewMedia = document.querySelector(".preview-media");
+    const liveRows = document.querySelectorAll(".row--live");
+    const liveTotal = document.querySelector("[data-live-total]");
+    const liveCount = liveRows.length;
+    let activeRow = null;
 
-    liveCount.forEach((node) => { node.textContent = String(liveProjects).padStart(2, "0"); });
+    liveTotal.textContent = String(liveCount).padStart(2, "0");
 
     try {
       if (localStorage.getItem("codevember-theme") === "dark") root.dataset.theme = "dark";
@@ -685,7 +387,8 @@
     function updateThemeButton() {
       const isDark = root.dataset.theme === "dark";
       themeButton.setAttribute("aria-pressed", String(isDark));
-      themeButton.setAttribute("aria-label", "Switch to " + (isDark ? "light" : "dark") + " theme");
+      themeButton.setAttribute("aria-label", "Switch to " + (isDark ? "light" : "dark") + " mode");
+      themeLabel.textContent = isDark ? "LIGHT" : "DARK";
     }
     updateThemeButton();
 
@@ -696,32 +399,81 @@
       updateThemeButton();
     });
 
-    function updateScrollLine() {
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = scrollable > 0 ? window.scrollY / scrollable : 0;
-      scrollLine.style.transform = "scaleX(" + progress + ")";
+    function placePreview(row, event) {
+      const box = preview.getBoundingClientRect();
+      const width = box.width || Math.min(360, window.innerWidth - 32);
+      const height = width / 1.48;
+      const rect = row.getBoundingClientRect();
+      const pointerX = event && Number.isFinite(event.clientX) ? event.clientX : rect.right;
+      const pointerY = event && Number.isFinite(event.clientY) ? event.clientY : rect.top + rect.height / 2;
+      let left = pointerX + 24;
+      if (left + width > window.innerWidth - 16) left = pointerX - width - 24;
+      left = Math.max(16, Math.min(left, window.innerWidth - width - 16));
+      const top = Math.max(16, Math.min(pointerY - height / 2, window.innerHeight - height - 16));
+      preview.style.setProperty("--x", left + "px");
+      preview.style.setProperty("--y", top + "px");
     }
-    window.addEventListener("scroll", updateScrollLine, { passive: true });
-    window.addEventListener("resize", updateScrollLine);
-    updateScrollLine();
 
-    if (!reducedMotion && "IntersectionObserver" in window) {
-      document.documentElement.classList.add("motion-ready");
-      const entries = document.querySelectorAll(".day");
-      const observer = new IntersectionObserver((items) => {
-        items.forEach((item) => {
-          if (item.isIntersecting) {
-            item.target.classList.add("is-visible");
-            observer.unobserve(item.target);
-          }
-        });
-      }, { threshold: 0.12, rootMargin: "0px 0px -24px 0px" });
+    function showPreview(row, event) {
+      if (window.matchMedia("(hover: none)").matches || window.innerWidth <= 620) return;
+      const source = row.dataset.preview || row.dataset.previewScene;
+      if (!source) return;
 
-      entries.forEach((entry, index) => {
-        entry.style.setProperty("--stagger", (index % 10) * 36 + "ms");
-        observer.observe(entry);
+      if (activeRow !== row) {
+        activeRow = row;
+        previewMedia.replaceChildren();
+        if (row.dataset.previewScene) {
+          const frame = document.createElement("iframe");
+          frame.src = row.dataset.previewScene;
+          frame.title = row.dataset.title + " scene preview";
+          frame.loading = "eager";
+          frame.tabIndex = -1;
+          frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
+          frame.addEventListener("load", () => {
+            try {
+              frame.contentDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
+            } catch (_) {}
+          });
+          previewMedia.appendChild(frame);
+        } else {
+          const image = document.createElement("img");
+          image.src = row.dataset.preview;
+          image.alt = row.dataset.title + " scene preview";
+          image.decoding = "async";
+          previewMedia.appendChild(image);
+        }
+      }
+
+      placePreview(row, event);
+      preview.dataset.visible = "true";
+    }
+
+    function hidePreview(row) {
+      if (activeRow !== row) return;
+      preview.dataset.visible = "false";
+      activeRow = null;
+      window.setTimeout(() => {
+        if (activeRow === null) previewMedia.replaceChildren();
+      }, 220);
+    }
+
+    liveRows.forEach((row) => {
+      row.addEventListener("pointerenter", (event) => showPreview(row, event));
+      row.addEventListener("pointermove", (event) => {
+        if (activeRow === row) placePreview(row, event);
       });
-    }
+      row.addEventListener("pointerleave", () => hidePreview(row));
+      row.addEventListener("focus", () => showPreview(row));
+      row.addEventListener("blur", () => hidePreview(row));
+    });
+
+    window.addEventListener("resize", () => {
+      if (activeRow) placePreview(activeRow);
+      else preview.dataset.visible = "false";
+    });
+    window.addEventListener("scroll", () => {
+      if (activeRow) placePreview(activeRow);
+    }, { passive: true });
   </script>
 </body>
 </html>
