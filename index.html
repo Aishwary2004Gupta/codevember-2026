@@ -259,6 +259,11 @@
     }
     .preview-media img { object-fit: cover; }
     .preview-media iframe { background: var(--preview-bg); }
+    .scene-preview[data-scene="pendulum"] {
+      width: min(420px, calc(100vw - 32px));
+      aspect-ratio: 1.28;
+      background: #081923;
+    }
 
     @keyframes appear {
       from { opacity: 0; transform: translateY(6px); }
@@ -402,7 +407,7 @@
     function placePreview(row, event) {
       const box = preview.getBoundingClientRect();
       const width = box.width || Math.min(360, window.innerWidth - 32);
-      const height = width / 1.48;
+      const height = preview.getBoundingClientRect().height || width / 1.48;
       const rect = row.getBoundingClientRect();
       const pointerX = event && Number.isFinite(event.clientX) ? event.clientX : rect.right;
       const pointerY = event && Number.isFinite(event.clientY) ? event.clientY : rect.top + rect.height / 2;
@@ -424,14 +429,22 @@
         previewMedia.replaceChildren();
         if (row.dataset.previewScene) {
           const frame = document.createElement("iframe");
-          frame.src = row.dataset.previewScene;
+          const previewUrl = new URL(row.dataset.previewScene, window.location.href);
+          previewUrl.searchParams.set("preview", "pendulum-v3");
+          frame.src = previewUrl.href;
           frame.title = row.dataset.title + " scene preview";
           frame.loading = "eager";
           frame.tabIndex = -1;
           frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
           frame.addEventListener("load", () => {
             try {
-              frame.contentDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
+              const previewDocument = frame.contentDocument;
+              previewDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
+              if (row.dataset.title === "Pendulum") {
+                const previewStyle = previewDocument.createElement("style");
+                previewStyle.textContent = "html, body { overflow: hidden !important; background: #081923 !important; } .masthead, .scene-intro, .angle-readout, .control-deck { display: none !important; } #scene { transform: translateY(68px) scale(1.4); transform-origin: center center; }";
+                previewDocument.head.appendChild(previewStyle);
+              }
             } catch (_) {}
           });
           previewMedia.appendChild(frame);
@@ -444,6 +457,7 @@
         }
       }
 
+      preview.dataset.scene = row.dataset.previewScene ? "pendulum" : "";
       placePreview(row, event);
       preview.dataset.visible = "true";
     }
@@ -451,6 +465,7 @@
     function hidePreview(row) {
       if (activeRow !== row) return;
       preview.dataset.visible = "false";
+      preview.dataset.scene = "";
       activeRow = null;
       window.setTimeout(() => {
         if (activeRow === null) previewMedia.replaceChildren();
