@@ -3,23 +3,86 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
-  <title>Pendulum</title>
+  <meta name="theme-color" content="#101820">
+  <meta name="description" content="An interactive double pendulum motion study for Codevember day 18.">
+  <title>18 — Pendulum Study</title>
   <script type="importmap">
     {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
   </script>
   <link rel="stylesheet" href="styles.css">
-  <script type="module" src="app.js"></script>
 </head>
-<body data-scene="triple">
-  <canvas id="scene" aria-label="An animated brass triple-pendulum mechanism on a dark display base."></canvas>
-  <button id="previous-scene" type="button" aria-label="Previous pendulum scene">
-    <span class="arrow" aria-hidden="true">←</span>
-    <span>PREVIOUS</span>
-  </button>
-  <button id="next-scene" type="button" aria-label="Next pendulum scene">
-    <span>NEXT</span>
-    <span class="arrow" aria-hidden="true">→</span>
-  </button>
+<body>
+  <canvas id="scene" aria-label="An interactive double pendulum. Drag the brass bob to set its release position."></canvas>
+
+  <header class="masthead">
+    <a class="back-link" href="../index.html" aria-label="Back to Codevember prompt index">
+      <span class="back-arrow" aria-hidden="true">←</span>
+      <span>CODEVEMBER <b> / 18</b></span>
+    </a>
+    <div class="motion-status" id="motion-status" aria-live="polite" data-running="true">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="status-label">IN MOTION</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="scene-intro" aria-labelledby="scene-title">
+      <p class="eyebrow"><span></span> A STUDY IN MOTION</p>
+      <h1 id="scene-title">Pendulum<span>.</span></h1>
+      <p class="intro-copy">Set the first swing. Gravity takes it from there.</p>
+    </section>
+
+    <aside class="angle-readout" aria-label="Current upper-arm angle">
+      <span class="readout-label">LIVE ANGLE</span>
+      <strong id="current-angle">+32°</strong>
+    </aside>
+
+    <section class="control-deck" aria-labelledby="control-heading">
+      <div class="deck-heading">
+        <div>
+          <p class="eyebrow deck-eyebrow">THE MOTION LAB</p>
+          <h2 id="control-heading">Give it a pull.</h2>
+        </div>
+        <p class="drag-note"><span aria-hidden="true">↗</span> Drag the brass bob to choose where it starts.</p>
+      </div>
+
+      <div class="control-grid">
+        <label class="range-control" for="release-angle">
+          <span class="range-label"><span>RELEASE ANGLE</span><output id="release-value" for="release-angle">32°</output></span>
+          <input id="release-angle" type="range" min="0" max="60" step="1" value="32">
+          <span class="range-ends"><span>REST</span><span>WIDE ARC</span></span>
+        </label>
+
+        <label class="range-control" for="gravity-value-input">
+          <span class="range-label"><span>GRAVITY</span><output id="gravity-value" for="gravity-value-input">9.8 m/s²</output></span>
+          <input id="gravity-value-input" type="range" min="3" max="14" step="0.1" value="9.8">
+          <span class="range-ends"><span>MOON</span><span>HEAVY</span></span>
+        </label>
+
+        <label class="range-control" for="speed-value-input">
+          <span class="range-label"><span>TIME SCALE</span><output id="speed-value" for="speed-value-input">1.00×</output></span>
+          <input id="speed-value-input" type="range" min="0.25" max="1.75" step="0.05" value="1">
+          <span class="range-ends"><span>SLOW</span><span>FAST</span></span>
+        </label>
+
+        <div class="action-controls">
+          <button id="toggle-motion" class="primary-button" type="button" aria-pressed="true">
+            <span class="button-symbol" id="motion-symbol" aria-hidden="true">Ⅱ</span>
+            <span id="motion-action">Pause motion</span>
+          </button>
+          <button id="reset-motion" class="reset-button" type="button">
+            <span aria-hidden="true">↺</span> Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="deck-footer">
+        <span><i aria-hidden="true"></i> DOUBLE PENDULUM / 3D SIMULATION</span>
+        <span>SPACE TO PAUSE <b>·</b> R TO RESET</span>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
