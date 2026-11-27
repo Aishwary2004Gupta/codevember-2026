@@ -262,7 +262,7 @@
     .scene-preview[data-scene="pendulum"] {
       width: min(420px, calc(100vw - 32px));
       aspect-ratio: 1.48;
-      background: #ebe5da;
+      background: #171621;
     }
 
     @keyframes appear {
@@ -430,7 +430,7 @@
         if (row.dataset.previewScene) {
           const frame = document.createElement("iframe");
           const previewUrl = new URL(row.dataset.previewScene, window.location.href);
-          previewUrl.searchParams.set("preview", "pendulum-repo-018-2");
+          previewUrl.searchParams.set("preview", "pendulum-typography-1");
           frame.src = previewUrl.href;
           frame.title = row.dataset.title + " scene preview";
           frame.loading = "eager";
@@ -442,7 +442,7 @@
               previewDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
               if (row.dataset.title === "Pendulum") {
                 const previewStyle = previewDocument.createElement("style");
-                previewStyle.textContent = "html, body { overflow: hidden !important; background: #ebe5da !important; } .cv-top, .cv-title, .cv-hud, .fig { display: none !important; } .cv-figure canvas { opacity: 1 !important; }";
+                previewStyle.textContent = "html, body { overflow: hidden !important; background: #171621 !important; } .cv-top, .cv-title, .cv-hud, .fig { display: none !important; } .cv-figure canvas { opacity: 1 !important; }";
                 previewDocument.head.appendChild(previewStyle);
               }
             } catch (_) {}
