@@ -261,8 +261,8 @@
     .preview-media iframe { background: var(--preview-bg); }
     .scene-preview[data-scene="pendulum"] {
       width: min(420px, calc(100vw - 32px));
-      aspect-ratio: 1.28;
-      background: #081923;
+      aspect-ratio: 1.48;
+      background: #ebe5da;
     }
 
     @keyframes appear {
@@ -430,7 +430,7 @@
         if (row.dataset.previewScene) {
           const frame = document.createElement("iframe");
           const previewUrl = new URL(row.dataset.previewScene, window.location.href);
-          previewUrl.searchParams.set("preview", "pendulum-v9");
+          previewUrl.searchParams.set("preview", "pendulum-repo-018-2");
           frame.src = previewUrl.href;
           frame.title = row.dataset.title + " scene preview";
           frame.loading = "eager";
@@ -442,7 +442,7 @@
               previewDocument.querySelectorAll("#previous-scene, #next-scene").forEach((button) => button.remove());
               if (row.dataset.title === "Pendulum") {
                 const previewStyle = previewDocument.createElement("style");
-                previewStyle.textContent = "html, body { overflow: hidden !important; background: #0c3c43 !important; }";
+                previewStyle.textContent = "html, body { overflow: hidden !important; background: #ebe5da !important; } .cv-top, .cv-title, .cv-hud, .fig { display: none !important; } .cv-figure canvas { opacity: 1 !important; }";
                 previewDocument.head.appendChild(previewStyle);
               }
             } catch (_) {}
