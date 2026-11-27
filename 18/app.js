@@ -31,7 +31,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const darkBackground = new THREE.Color(0x101820);
+const darkBackground = new THREE.Color(0x081923);
 const lightBackground = new THREE.Color(0xafa6a8);
 const pendulumBackground = new THREE.Color(0xb9c2cb);
 scene.background = darkBackground.clone();
@@ -57,9 +57,9 @@ function placeCamera() {
 }
 placeCamera();
 
-scene.add(new THREE.HemisphereLight(0xe6f0ff, 0x15191d, 1.45));
+scene.add(new THREE.HemisphereLight(0xe6f7ff, 0x10242a, 1.5));
 
-const keyLight = new THREE.DirectionalLight(0xffe6b5, 5.2);
+const keyLight = new THREE.DirectionalLight(0xffedcb, 4.9);
 keyLight.position.set(-7, 10, 8);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048, 2048);
@@ -69,11 +69,11 @@ keyLight.shadow.camera.top = 12;
 keyLight.shadow.camera.bottom = -10;
 scene.add(keyLight);
 
-const fillLight = new THREE.DirectionalLight(0xd2e3f0, 2.2);
+const fillLight = new THREE.DirectionalLight(0x9ddbe5, 2.8);
 fillLight.position.set(7, 5, 6);
 scene.add(fillLight);
 
-const rimLight = new THREE.DirectionalLight(0xffcf7b, 4.1);
+const rimLight = new THREE.DirectionalLight(0x82dbd4, 4.2);
 rimLight.position.set(1, 8, -7);
 scene.add(rimLight);
 
@@ -82,7 +82,7 @@ baseLight.position.set(0, 3, 6);
 scene.add(baseLight);
 
 const floorMaterial = new THREE.MeshStandardMaterial({
-  color: 0x10161b,
+  color: 0x0b2027,
   metalness: 0.12,
   roughness: 0.7,
 });
@@ -472,14 +472,14 @@ mechanicalGroup.position.y = -0.1;
 scene.add(mechanicalGroup);
 
 const mechanismGold = new THREE.MeshPhysicalMaterial({
-  color: 0xc29a4c,
+  color: 0xd4aa58,
   metalness: 0.9,
   roughness: 0.2,
   clearcoat: 0.85,
   clearcoatRoughness: 0.13,
 });
 const mechanismDark = new THREE.MeshPhysicalMaterial({
-  color: 0x11161c,
+  color: 0x07151c,
   metalness: 0.82,
   roughness: 0.22,
   clearcoat: 0.8,
@@ -746,21 +746,90 @@ const mechanismWeight = new THREE.Group();
 mechanismWeight.position.set(0, -1.78, -0.02);
 mechanismLowerPivot.add(mechanismWeight);
 
-const weightCore = new THREE.Mesh(new THREE.SphereGeometry(0.49, 64, 48), mechanismGold);
+const weightEnamel = new THREE.MeshPhysicalMaterial({
+  color: 0x15515c,
+  metalness: 0.62,
+  roughness: 0.2,
+  clearcoat: 1,
+  clearcoatRoughness: 0.1,
+  envMapIntensity: 1.25,
+});
+const weightPearl = new THREE.MeshPhysicalMaterial({
+  color: 0xb9e7e4,
+  metalness: 0.76,
+  roughness: 0.15,
+  clearcoat: 1,
+  clearcoatRoughness: 0.08,
+});
+const weightProfile = [
+  new THREE.Vector2(0, -0.56),
+  new THREE.Vector2(0.18, -0.53),
+  new THREE.Vector2(0.33, -0.44),
+  new THREE.Vector2(0.43, -0.29),
+  new THREE.Vector2(0.47, -0.1),
+  new THREE.Vector2(0.43, 0.07),
+  new THREE.Vector2(0.31, 0.29),
+  new THREE.Vector2(0.2, 0.44),
+  new THREE.Vector2(0.11, 0.52),
+  new THREE.Vector2(0, 0.53),
+];
+const weightCore = new THREE.Mesh(new THREE.LatheGeometry(weightProfile, 96), weightEnamel);
 weightCore.castShadow = true;
 weightCore.receiveShadow = true;
 mechanismWeight.add(weightCore);
 
-const weightBand = new THREE.Mesh(new THREE.TorusGeometry(0.475, 0.026, 12, 96), paleMetalMaterial);
-weightBand.rotation.set(0.54, 0.22, -0.42);
-weightBand.position.z = 0.045;
-weightBand.castShadow = true;
-weightBand.receiveShadow = true;
-mechanismWeight.add(weightBand);
+const weightCap = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.22, 0.16, 64), mechanismGold);
+weightCap.position.y = 0.43;
+weightCap.castShadow = true;
+weightCap.receiveShadow = true;
+mechanismWeight.add(weightCap);
 
-const weightGoldSeam = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.012, 8, 96), mechanismDark);
-weightGoldSeam.rotation.set(-0.24, 0.31, 0.58);
-mechanismWeight.add(weightGoldSeam);
+const weightCapRim = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.018, 10, 64), paleMetalMaterial);
+weightCapRim.rotation.x = Math.PI / 2;
+weightCapRim.position.y = 0.37;
+mechanismWeight.add(weightCapRim);
+
+for (const [radius, tube, y, material] of [
+  [0.31, 0.014, 0.28, mechanismGold],
+  [0.46, 0.019, -0.08, mechanismGold],
+  [0.39, 0.012, -0.34, paleMetalMaterial],
+]) {
+  const latitude = new THREE.Mesh(new THREE.TorusGeometry(radius, tube, 10, 96), material);
+  latitude.rotation.x = Math.PI / 2;
+  latitude.position.y = y;
+  latitude.castShadow = true;
+  latitude.receiveShadow = true;
+  mechanismWeight.add(latitude);
+}
+
+const weightMedallion = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.14, 0.14, 0.045, 64),
+  mechanismGold,
+);
+weightMedallion.rotation.x = Math.PI / 2;
+weightMedallion.position.set(0, -0.08, 0.445);
+weightMedallion.castShadow = true;
+weightMedallion.receiveShadow = true;
+mechanismWeight.add(weightMedallion);
+
+const weightMedallionFace = new THREE.Mesh(
+  new THREE.CircleGeometry(0.112, 64),
+  mechanismDark,
+);
+weightMedallionFace.position.set(0, -0.08, 0.471);
+mechanismWeight.add(weightMedallionFace);
+
+const weightMedallionRim = new THREE.Mesh(
+  new THREE.TorusGeometry(0.115, 0.012, 10, 64),
+  weightPearl,
+);
+weightMedallionRim.position.set(0, -0.08, 0.476);
+mechanismWeight.add(weightMedallionRim);
+
+const weightMedallionPin = new THREE.Mesh(new THREE.SphereGeometry(0.035, 32, 24), weightPearl);
+weightMedallionPin.position.set(0, -0.08, 0.486);
+weightMedallionPin.castShadow = true;
+mechanismWeight.add(weightMedallionPin);
 
 for (const z of [-0.18, 0.18]) {
   const bearing = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 40), mechanismDark);
@@ -1022,7 +1091,10 @@ function resize() {
   const neededWidth = 8.2;
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
-  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
+  const compactView = window.innerWidth <= 760;
+  cameraTarget.y = compactView ? -2.75 : -1.7;
+  const responsiveFrame = compactView ? 1.3 : 1.08;
+  cameraRadius = Math.max(radiusForHeight, radiusForWidth) * responsiveFrame;
   camera.updateProjectionMatrix();
   placeCamera();
 }
