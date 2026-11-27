@@ -3,8 +3,19 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const canvas = document.querySelector("#scene");
-const previousButton = document.querySelector("#previous-scene");
-const nextButton = document.querySelector("#next-scene");
+const toggleButton = document.querySelector("#toggle-motion");
+const resetButton = document.querySelector("#reset-motion");
+const statusLabel = document.querySelector("#status-label");
+const motionStatus = document.querySelector("#motion-status");
+const motionAction = document.querySelector("#motion-action");
+const motionSymbol = document.querySelector("#motion-symbol");
+const currentAngle = document.querySelector("#current-angle");
+const releaseRange = document.querySelector("#release-angle");
+const releaseValue = document.querySelector("#release-value");
+const gravityRange = document.querySelector("#gravity-value-input");
+const gravityValue = document.querySelector("#gravity-value");
+const speedRange = document.querySelector("#speed-value-input");
+const speedValue = document.querySelector("#speed-value");
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
@@ -20,7 +31,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const darkBackground = new THREE.Color(0x020609);
+const darkBackground = new THREE.Color(0x101820);
 const lightBackground = new THREE.Color(0xafa6a8);
 const pendulumBackground = new THREE.Color(0xb9c2cb);
 scene.background = darkBackground.clone();
@@ -83,6 +94,7 @@ scene.add(floor);
 
 const tripleFrame = new THREE.Group();
 tripleFrame.name = "triple-pendulum-scene";
+tripleFrame.visible = false;
 scene.add(tripleFrame);
 let tripleMixer = null;
 
@@ -170,7 +182,6 @@ function loadTriplePendulum() {
     },
   );
 }
-loadTriplePendulum();
 
 const pendulumFrame = new THREE.Group();
 pendulumFrame.name = "uploaded-pendulum-scene";
@@ -227,7 +238,6 @@ function loadUploadedPendulum() {
     },
   );
 }
-loadUploadedPendulum();
 
 const armillaryGroup = new THREE.Group();
 armillaryGroup.name = "orbital-armillary-scene";
@@ -457,7 +467,7 @@ armillaryGroup.visible = false;
 
 const mechanicalGroup = new THREE.Group();
 mechanicalGroup.name = "arched-double-pendulum-scene";
-mechanicalGroup.visible = false;
+mechanicalGroup.visible = true;
 mechanicalGroup.position.y = -0.1;
 scene.add(mechanicalGroup);
 
@@ -761,85 +771,255 @@ for (const z of [-0.18, 0.18]) {
   mechanismUpperPivot.add(bearing);
 }
 
-const darkFloorColor = new THREE.Color(0x10161b);
-const lightFloorColor = new THREE.Color(0x777276);
-const pendulumFloorColor = new THREE.Color(0x818a93);
-const sceneGroups = [tripleFrame, armillaryGroup, pendulumFrame, mechanicalGroup];
-const sceneKeys = ["triple", "armillary", "pendulum", "mechanical"];
-const sceneLabels = [
-  "An animated brass triple-pendulum mechanism on a dark display base.",
-  "A magnetic pendulum with three smaller orbiting metal balls around a chrome sphere.",
-  "An animated blue, rose, and chrome pendulum sculpture.",
-  "A looping gold double pendulum inside a polished arched frame.",
-];
-const sceneBackgrounds = [darkBackground, lightBackground, pendulumBackground, darkBackground];
-const sceneFloors = [darkFloorColor, lightFloorColor, pendulumFloorColor, darkFloorColor];
-const transitionStartBg = darkBackground.clone();
-const transitionTargetBg = darkBackground.clone();
-const transitionStartFloor = darkFloorColor.clone();
-const transitionTargetFloor = darkFloorColor.clone();
-let sceneTransition = 1;
+const pendulumLength1 = 3.63;
+const pendulumLength2 = 1.78;
+const pendulumMass1 = 1.25;
+const pendulumMass2 = 1;
+const motionState = { theta1: 0, theta2: 0, omega1: 0, omega2: 0 };
+let gravity = Number(gravityRange.value);
+let timeScale = Number(speedRange.value);
 let running = true;
-
-function showScene(index) {
-  activeScene = ((index % sceneKeys.length) + sceneKeys.length) % sceneKeys.length;
-  sceneGroups.forEach((group, sceneIndex) => { group.visible = sceneIndex === activeScene; });
-  document.body.dataset.scene = sceneKeys[activeScene];
-  canvas.style.visibility = "visible";
-  canvas.setAttribute("aria-label", sceneLabels[activeScene]);
-
-  transitionStartBg.copy(scene.background);
-  transitionTargetBg.copy(sceneBackgrounds[activeScene]);
-  transitionStartFloor.copy(floorMaterial.color);
-  transitionTargetFloor.copy(sceneFloors[activeScene]);
-  sceneTransition = 0;
-  resize();
-}
-nextButton.addEventListener("click", () => showScene(activeScene + 1));
-previousButton.addEventListener("click", () => showScene(activeScene - 1));
-
-let dragging = false;
+let pointerMode = null;
 let lastX = 0;
 let lastY = 0;
+let uiAccumulator = 0;
+
+const raycaster = new THREE.Raycaster();
+const pointerNdc = new THREE.Vector2();
+const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const dragPoint = new THREE.Vector3();
+const topPivotWorld = new THREE.Vector3(0, 4.35, 0);
+
+const trailCapacity = 130;
+const trailPositions = new Float32Array(trailCapacity * 3);
+const trailGeometry = new THREE.BufferGeometry();
+const trailAttribute = new THREE.BufferAttribute(trailPositions, 3);
+trailAttribute.setUsage(THREE.DynamicDrawUsage);
+trailGeometry.setAttribute("position", trailAttribute);
+trailGeometry.setDrawRange(0, 0);
+const trailMaterial = new THREE.LineBasicMaterial({
+  color: 0xd7ad69,
+  transparent: true,
+  opacity: 0.31,
+  depthWrite: false,
+});
+const motionTrail = new THREE.Line(trailGeometry, trailMaterial);
+motionTrail.frustumCulled = false;
+scene.add(motionTrail);
+const trailHistory = [];
+let trailAccumulator = 0;
+
+function setPendulumPose() {
+  mechanismUpperPivot.rotation.z = motionState.theta1;
+  mechanismLowerPivot.rotation.z = motionState.theta2 - motionState.theta1;
+}
+
+function updateMotionUi() {
+  const isRunning = String(running);
+  motionStatus.dataset.running = isRunning;
+  statusLabel.textContent = running ? "IN MOTION" : "HELD AT RELEASE";
+  motionAction.textContent = running ? "Pause motion" : "Release pendulum";
+  motionSymbol.textContent = running ? "Ⅱ" : "▶";
+  toggleButton.setAttribute("aria-pressed", isRunning);
+  toggleButton.setAttribute("aria-label", running ? "Pause pendulum motion" : "Release pendulum");
+}
+
+function clearMotionTrail() {
+  trailHistory.length = 0;
+  trailAccumulator = 0;
+  trailGeometry.setDrawRange(0, 0);
+  trailAttribute.needsUpdate = true;
+}
+
+function showCurrentAngle() {
+  const degrees = Math.round(THREE.MathUtils.radToDeg(motionState.theta1));
+  currentAngle.textContent = `${degrees > 0 ? "+" : ""}${degrees}°`;
+}
+
+function setReleasePose(shouldRun = running) {
+  const angle = THREE.MathUtils.degToRad(Number(releaseRange.value));
+  motionState.theta1 = angle;
+  motionState.theta2 = -angle * 0.34;
+  motionState.omega1 = 0;
+  motionState.omega2 = 0;
+  running = shouldRun;
+  setPendulumPose();
+  showCurrentAngle();
+  clearMotionTrail();
+  updateMotionUi();
+}
+
+function formatReleaseValue() {
+  releaseValue.textContent = `${Math.round(Number(releaseRange.value))}°`;
+}
+
+function recordMotionTrail(delta) {
+  trailAccumulator += delta;
+  if (trailAccumulator < 0.045) return;
+  trailAccumulator = 0;
+  const point = mechanismWeight.getWorldPosition(new THREE.Vector3());
+  point.z += 0.07;
+  trailHistory.push(point);
+  if (trailHistory.length > trailCapacity) trailHistory.shift();
+  for (let index = 0; index < trailHistory.length; index += 1) {
+    const trailPoint = trailHistory[index];
+    const offset = index * 3;
+    trailPositions[offset] = trailPoint.x;
+    trailPositions[offset + 1] = trailPoint.y;
+    trailPositions[offset + 2] = trailPoint.z;
+  }
+  trailAttribute.needsUpdate = true;
+  trailGeometry.setDrawRange(0, trailHistory.length);
+}
+
+function stepDoublePendulum(delta) {
+  const theta1 = motionState.theta1;
+  const theta2 = motionState.theta2;
+  const omega1 = motionState.omega1;
+  const omega2 = motionState.omega2;
+  const difference = theta1 - theta2;
+  const denominator = 2 * pendulumMass1 + pendulumMass2 - pendulumMass2 * Math.cos(2 * difference);
+  const acceleration1 = (
+    -gravity * (2 * pendulumMass1 + pendulumMass2) * Math.sin(theta1)
+    - pendulumMass2 * gravity * Math.sin(theta1 - 2 * theta2)
+    - 2 * Math.sin(difference) * pendulumMass2 * (
+      omega2 * omega2 * pendulumLength2
+      + omega1 * omega1 * pendulumLength1 * Math.cos(difference)
+    )
+  ) / (pendulumLength1 * denominator);
+  const acceleration2 = (
+    2 * Math.sin(difference) * (
+      omega1 * omega1 * pendulumLength1 * (pendulumMass1 + pendulumMass2)
+      + gravity * (pendulumMass1 + pendulumMass2) * Math.cos(theta1)
+      + omega2 * omega2 * pendulumLength2 * pendulumMass2 * Math.cos(difference)
+    )
+  ) / (pendulumLength2 * denominator);
+  const airDrag = Math.exp(-0.025 * delta);
+  motionState.omega1 = (omega1 + acceleration1 * delta) * airDrag;
+  motionState.omega2 = (omega2 + acceleration2 * delta) * airDrag;
+  motionState.theta1 += motionState.omega1 * delta;
+  motionState.theta2 += motionState.omega2 * delta;
+}
+
+function updatePointerRay(event) {
+  const bounds = canvas.getBoundingClientRect();
+  pointerNdc.set(
+    ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+    -((event.clientY - bounds.top) / bounds.height) * 2 + 1,
+  );
+  raycaster.setFromCamera(pointerNdc, camera);
+}
+
+function dragPendulumToPointer(event) {
+  updatePointerRay(event);
+  if (!raycaster.ray.intersectPlane(dragPlane, dragPoint)) return;
+
+  const dx = dragPoint.x - topPivotWorld.x;
+  const dy = topPivotWorld.y - dragPoint.y;
+  const minimumReach = Math.abs(pendulumLength1 - pendulumLength2) + 0.01;
+  const maximumReach = pendulumLength1 + pendulumLength2 - 0.01;
+  const reach = THREE.MathUtils.clamp(Math.hypot(dx, dy), minimumReach, maximumReach);
+  const relativeCosine = THREE.MathUtils.clamp(
+    (reach * reach - pendulumLength1 * pendulumLength1 - pendulumLength2 * pendulumLength2)
+      / (2 * pendulumLength1 * pendulumLength2),
+    -1,
+    1,
+  );
+  const branch = Math.sign(motionState.theta2 - motionState.theta1) || -1;
+  const relativeAngle = branch * Math.acos(relativeCosine);
+  const endpointAngle = Math.atan2(dx, dy);
+  const firstAngle = endpointAngle - Math.atan2(
+    pendulumLength2 * Math.sin(relativeAngle),
+    pendulumLength1 + pendulumLength2 * Math.cos(relativeAngle),
+  );
+  const maximumAngle = THREE.MathUtils.degToRad(Number(releaseRange.max));
+  motionState.theta1 = THREE.MathUtils.clamp(firstAngle, -maximumAngle, maximumAngle);
+  motionState.theta2 = motionState.theta1 + relativeAngle;
+  motionState.omega1 = 0;
+  motionState.omega2 = 0;
+  const sliderAngle = Math.round(Math.abs(THREE.MathUtils.radToDeg(motionState.theta1)));
+  releaseRange.value = String(sliderAngle);
+  formatReleaseValue();
+  setPendulumPose();
+  showCurrentAngle();
+  clearMotionTrail();
+}
+
+releaseRange.addEventListener("input", () => {
+  formatReleaseValue();
+  setReleasePose(running);
+});
+gravityRange.addEventListener("input", () => {
+  gravity = Number(gravityRange.value);
+  gravityValue.textContent = `${gravity.toFixed(1)} m/s²`;
+});
+speedRange.addEventListener("input", () => {
+  timeScale = Number(speedRange.value);
+  speedValue.textContent = `${timeScale.toFixed(2)}×`;
+});
+toggleButton.addEventListener("click", () => {
+  running = !running;
+  updateMotionUi();
+});
+resetButton.addEventListener("click", () => setReleasePose(false));
 
 canvas.addEventListener("pointerdown", (event) => {
-  dragging = true;
+  if (event.button !== 0) return;
+  updatePointerRay(event);
+  const pickedBob = raycaster.intersectObject(mechanismWeight, true).length > 0;
+  pointerMode = pickedBob ? "pendulum" : "camera";
   lastX = event.clientX;
   lastY = event.clientY;
   canvas.setPointerCapture(event.pointerId);
+  if (pickedBob) {
+    running = false;
+    updateMotionUi();
+    dragPendulumToPointer(event);
+  }
 });
 canvas.addEventListener("pointermove", (event) => {
-  if (!dragging) return;
+  if (pointerMode === "pendulum") {
+    dragPendulumToPointer(event);
+    return;
+  }
+  if (pointerMode !== "camera") return;
   cameraAzimuth -= (event.clientX - lastX) * 0.005;
   cameraPolar = THREE.MathUtils.clamp(cameraPolar + (event.clientY - lastY) * 0.004, 0.78, 1.52);
   lastX = event.clientX;
   lastY = event.clientY;
   placeCamera();
 });
-canvas.addEventListener("pointerup", () => { dragging = false; });
-canvas.addEventListener("pointercancel", () => { dragging = false; });
+canvas.addEventListener("pointerup", () => { pointerMode = null; });
+canvas.addEventListener("pointercancel", () => { pointerMode = null; });
 canvas.addEventListener("wheel", (event) => {
   cameraRadius = THREE.MathUtils.clamp(cameraRadius + event.deltaY * 0.008, 8, 40);
   placeCamera();
 }, { passive: true });
 
 window.addEventListener("keydown", (event) => {
-  if (event.code !== "Space" || event.repeat) return;
-  event.preventDefault();
-  running = !running;
+  const focusedTag = document.activeElement?.tagName;
+  if (["INPUT", "BUTTON"].includes(focusedTag)) return;
+  if (event.code === "Space" && !event.repeat) {
+    event.preventDefault();
+    running = !running;
+    updateMotionUi();
+  } else if (event.key.toLowerCase() === "r") {
+    setReleasePose(false);
+  }
 });
 
+releaseValue.textContent = `${Math.round(Number(releaseRange.value))}°`;
+gravityValue.textContent = `${gravity.toFixed(1)} m/s²`;
+speedValue.textContent = `${timeScale.toFixed(2)}×`;
 function resize() {
   const aspect = window.innerWidth / window.innerHeight;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = aspect;
-
-  const isMechanicalScene = activeScene === 3;
   camera.fov = 30;
   const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
-  const neededHeight = isMechanicalScene ? 8.35 : Math.max(fitHeight, 8.2);
-  const neededWidth = isMechanicalScene ? 5.2 : Math.max(fitWidth, 7.2);
+  const neededHeight = 8.35;
+  const neededWidth = 5.9;
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
   cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
@@ -847,49 +1027,28 @@ function resize() {
   placeCamera();
 }
 
-function updateSceneTransition(delta) {
-  if (sceneTransition >= 1) return;
-  sceneTransition = Math.min(sceneTransition + delta / 0.85, 1);
-  const eased = sceneTransition * sceneTransition * (3 - 2 * sceneTransition);
-  scene.background.copy(transitionStartBg).lerp(transitionTargetBg, eased);
-  scene.fog.color.copy(scene.background);
-  floorMaterial.color.copy(transitionStartFloor).lerp(transitionTargetFloor, eased);
-}
-
 window.addEventListener("resize", resize);
 resize();
+setReleasePose(true);
 
 const clock = new THREE.Clock();
-let elapsed = 0;
+let currentAngleTimer = 0;
 function animate() {
   requestAnimationFrame(animate);
-  const delta = Math.min(clock.getDelta(), 0.05);
+  const frameDelta = Math.min(clock.getDelta(), 0.05);
   if (running) {
-    elapsed += delta;
-    if (tripleMixer) tripleMixer.update(delta);
-    if (pendulumMixer) pendulumMixer.update(delta);
-    rotorA.rotation.set(
-      0.12 + 0.22 * Math.sin(elapsed * 0.28),
-      elapsed * 0.34,
-      0.08 + elapsed * 0.12,
-    );
-    rotorB.rotation.set(
-      0.95 + 0.26 * Math.sin(elapsed * 0.21 + 1.1),
-      elapsed * 0.22,
-      0.28 - elapsed * 0.18,
-    );
-    rotorC.rotation.set(
-      0.5 + elapsed * 0.15,
-      0.62 + 0.18 * Math.sin(elapsed * 0.17),
-      -0.18 + elapsed * 0.11,
-    );
-    mechanismUpperPivot.rotation.z = 0.12 * Math.cos(elapsed * Math.PI / 2);
-    const mechanismPhase = THREE.MathUtils.euclideanModulo(elapsed * Math.PI / 2, Math.PI * 2);
-    mechanismLowerPivot.rotation.z = -2.35 + mechanismPhase;
-    mechanismWeight.rotation.y = THREE.MathUtils.euclideanModulo(elapsed * 0.16, Math.PI * 2);
+    const simulationDelta = frameDelta * timeScale;
+    const steps = Math.max(1, Math.ceil(simulationDelta / (1 / 120)));
+    const step = simulationDelta / steps;
+    for (let index = 0; index < steps; index += 1) stepDoublePendulum(step);
+    setPendulumPose();
+    recordMotionTrail(simulationDelta);
+    currentAngleTimer += frameDelta;
+    if (currentAngleTimer > 0.08) {
+      showCurrentAngle();
+      currentAngleTimer = 0;
+    }
   }
-
-  updateSceneTransition(delta);
   renderer.render(scene, camera);
 }
 animate();
