@@ -1,4 +1,4 @@
-import { Stage } from "./scene/stage.js?v=glass-grab-10";
+import { Stage } from "./scene/stage.js?v=glass-grab-11";
 
 const canvas = document.querySelector("#scene");
 const shapeSelect = document.querySelector("#form-select");

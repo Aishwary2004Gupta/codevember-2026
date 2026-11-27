@@ -20,7 +20,7 @@ export class Stage {
         const mq = matchMedia("(prefers-reduced-motion: reduce)");
         let stage;
         if ("transferControlToOffscreen" in canvas && "OffscreenCanvas" in window) {
-            const worker = new Worker(new URL("./worker.js?v=glass-grab-10", import.meta.url), { type: "module" });
+            const worker = new Worker(new URL("./worker.js?v=glass-grab-11", import.meta.url), { type: "module" });
             const off = canvas.transferControlToOffscreen();
             stage = new Stage(canvas, (m) => worker.postMessage(m));
             worker.onmessage = (e) => stage.hear(e.data);
@@ -30,8 +30,8 @@ export class Stage {
         }
         else {
             const [{ Pendulum }, { apply }] = await Promise.all([
-                import("./pendulum.js?v=glass-grab-10"),
-                import("./apply.js?v=glass-grab-10"),
+                import("./pendulum.js?v=glass-grab-11"),
+                import("./apply.js?v=glass-grab-11"),
             ]);
             const p = new Pendulum(canvas, mq.matches);
             stage = new Stage(canvas, (m) => apply(p, m));

@@ -1,5 +1,5 @@
-import { apply } from "./apply.js?v=glass-grab-10";
-import { Pendulum } from "./pendulum.js?v=glass-grab-10";
+import { apply } from "./apply.js?v=glass-grab-11";
+import { Pendulum } from "./pendulum.js?v=glass-grab-11";
 // WORKER
 // waking a cold gpu here never blocks the page
 let p = null;

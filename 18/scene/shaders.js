@@ -644,3 +644,85 @@ void main() {
   if (uSurface == 8) lit += edge * pow(max(dot(reflect(-viewDir, n), lightDir), 0.0), 72.0) * 1.4;
   o = vec4(lit, 1.0);
 }`;
+
+// Shared refractive crystal surface for the selectable non-diamond forms.
+export const FORM_GLASS_FS = `${HEAD}
+const vec3 SUN = ${v3(SUN)};
+const vec3 WIN_W = ${v3(W)};
+const vec3 WIN_U = ${v3(U)};
+const vec3 WIN_V = ${v3(V)};
+uniform sampler2D uWall;
+uniform vec2 uHalf;
+uniform vec3 uEye;
+uniform float uThickness;
+uniform float uTime;
+in vec3 vLocal;
+in vec3 vWorld;
+in vec3 vNormal;
+out vec4 o;
+float hash3(vec3 p) {
+  p = fract(p * 0.3183099 + 0.1);
+  p *= 17.0;
+  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+float noise3(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash3(i), hash3(i + vec3(1, 0, 0)), f.x),
+      mix(hash3(i + vec3(0, 1, 0)), hash3(i + vec3(1, 1, 0)), f.x), f.y),
+    mix(mix(hash3(i + vec3(0, 0, 1)), hash3(i + vec3(1, 0, 1)), f.x),
+      mix(hash3(i + vec3(0, 1, 1)), hash3(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}
+float box(float x, float a, float b, float s) {
+  return smoothstep(a - s, a + s, x) * (1.0 - smoothstep(b - s, b + s, x));
+}
+vec3 room(vec3 d) {
+  vec3 c = mix(vec3(0.33, 0.325, 0.32), vec3(0.86, 0.84, 0.8), smoothstep(-0.45, 0.45, d.y));
+  c *= 1.0 - 0.55 * box(d.x, -0.75, -0.5, 0.01) * step(d.y, 0.35);
+  c += vec3(0.25, 0.24, 0.22) * smoothstep(0.3, 0.9, d.x);
+  float a = dot(d, WIN_W);
+  if (a > 0.05) {
+    vec2 uv = vec2(dot(d, WIN_U), dot(d, WIN_V)) / a;
+    float w = box(uv.x, -0.42, 0.42, 0.02) * box(uv.y, -0.55, 0.75, 0.02);
+    w *= 1.0 - box(uv.x, 0.0, 0.05, 0.01) * 0.85;
+    c = mix(c, vec3(1.45, 1.4, 1.3), w);
+    float r2 = dot(uv, uv);
+    c += vec3(1.0, 0.95, 0.85) * (exp(-r2 * 1400.0) * 22.0 + exp(-r2 * 60.0) * 0.5);
+  }
+  return c;
+}
+vec3 env(vec3 p, vec3 d, float blur) {
+  if (d.z > 0.1) return room(d);
+  vec2 wall = p.xy + d.xy * (-p.z / min(d.z, -1e-3));
+  return textureLod(uWall, clamp(wall / uHalf * 0.5 + 0.5, 0.0, 1.0), blur).rgb;
+}
+void main() {
+  vec3 n = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 incident = normalize(vWorld - uEye);
+  float cosine = clamp(-dot(incident, n), 0.0, 1.0);
+  float fresnel = 0.045 + 0.955 * pow(1.0 - cosine, 5.0);
+  float grain = noise3(vLocal * 74.0) * 0.55 + noise3(vLocal * 31.0 + 2.7) * 0.45;
+  float cloud = smoothstep(0.48, 0.82, noise3(vLocal * 19.0 + vec3(0.0, uTime * 0.003, 0.0)));
+  float veinNoise = noise3(vLocal * 47.0 + vec3(4.0, 0.0, uTime * 0.002));
+  float vein = smoothstep(0.78, 0.94, veinNoise) * (1.0 - smoothstep(0.94, 0.985, grain));
+  float thickness = uThickness * (0.72 + 0.68 * (1.0 - cosine));
+  float blur = 0.4 + grain * 0.65;
+  vec3 ior = vec3(1.516, 1.522, 1.531);
+  vec3 rayR = refract(incident, n, 1.0 / ior.r);
+  vec3 rayG = refract(incident, n, 1.0 / ior.g);
+  vec3 rayB = refract(incident, n, 1.0 / ior.b);
+  vec3 through;
+  through.r = dot(rayR, rayR) > 0.0 ? env(vWorld + rayR * thickness, rayR, blur).r : env(vWorld, reflect(incident, n), blur).r;
+  through.g = dot(rayG, rayG) > 0.0 ? env(vWorld + rayG * thickness, rayG, blur).g : env(vWorld, reflect(incident, n), blur).g;
+  through.b = dot(rayB, rayB) > 0.0 ? env(vWorld + rayB * thickness, rayB, blur).b : env(vWorld, reflect(incident, n), blur).b;
+  vec3 reflected = env(vWorld, reflect(incident, n), 0.0);
+  vec3 color = mix(through * 0.82, reflected, clamp(0.12 + fresnel * 0.9, 0.0, 1.0));
+  float sunGlint = pow(max(dot(reflect(incident, n), -SUN), 0.0), 92.0);
+  float facet = clamp(length(fwidth(n)) * 3.2, 0.0, 1.0);
+  color = mix(color, vec3(0.96, 0.98, 1.0), cloud * 0.18 + vein * 0.34);
+  color += vec3(0.78, 0.88, 1.0) * sunGlint * 1.1;
+  color += vec3(0.68, 0.77, 0.84) * (pow(1.0 - cosine, 8.0) * 0.2 + facet * 0.07);
+  color = color / (1.0 + 0.12 * max(color - 0.85, 0.0));
+  o = vec4(color, 1.0);
+}`;

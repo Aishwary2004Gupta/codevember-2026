@@ -1,9 +1,9 @@
 import { Beams, STRIDE } from "./beams.js";
 import { crystal } from "./crystal.js";
-import { diamondMesh, donutMesh, parseOBJ, sphereMesh } from "./forms.js?v=glass-grab-10";
+import { diamondMesh, donutMesh, parseOBJ, sphereMesh } from "./forms.js?v=glass-grab-11";
 import { Follow, Osc, orient } from "./motion.js";
 import { SCENE, SUN, sunlit } from "./scene.js";
-import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_FS } from "./shaders.js?v=glass-grab-10";
+import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_GLASS_FS } from "./shaders.js?v=glass-grab-11";
 const MAX_DPR = 2;
 const MAX_DT_S = 1 / 20;
 const PERIOD_S = 2.8; // change swing period here
@@ -55,7 +55,6 @@ const LINE_QUADS = SHADOW_QUADS * 2;
 const PENUMBRA_PX = 1.3;
 const FORM_FILES = { skull: "skull.obj", duck: "duck.obj", hand: "hand.obj", astronaut: "astronaut.obj" };
 const FORM_SCALE = 1.32;
-const FORM_SURFACE = 8;
 export class Pendulum {
     canvas;
     gl;
@@ -115,8 +114,8 @@ export class Pendulum {
     t = 0;
     // SWING
     // full pendulum, stepped, so a hard throw goes over the top
-    th = 0.05;
-    om = 0;
+    th = -0.1;
+    om = 0.95;
     seen = 0;
     shadowX = 0;
     shadowY = 0;
@@ -169,7 +168,7 @@ export class Pendulum {
         this.glintP = this.program(GLINT_VS, GLINT_FS);
         this.lineP = this.program(LINE_VS, LINE_FS);
         this.crystalP = this.program(CRYSTAL_VS, crystalFs(this.c.faces, this.c.height));
-        this.formP = this.program(FORM_VS, FORM_FS);
+        this.formP = this.program(FORM_VS, FORM_GLASS_FS);
         // CRYSTAL MESH
         this.crystalVao = gl.createVertexArray();
         gl.bindVertexArray(this.crystalVao);
@@ -381,7 +380,8 @@ export class Pendulum {
         find("fRot", this.formP, "uRot");
         find("fPos", this.formP, "uPos");
         find("fEye", this.formP, "uEye");
-        find("fSurface", this.formP, "uSurface");
+        find("fHalf", this.formP, "uHalf");
+        find("fThickness", this.formP, "uThickness");
         find("fTime", this.formP, "uTime");
         find("pVP", this.spotP, "uVP");
         find("gVP", this.glintP, "uVP");
@@ -393,7 +393,7 @@ export class Pendulum {
         gl.uniform1f(gl.getUniformLocation(this.lineP, "uLink"), LINK_M);
         // SAMPLERS
         // wall on unit 0, mask on unit 1
-        for (const p of [this.blitP, this.shadeP, this.causticP, this.crystalP]) {
+        for (const p of [this.blitP, this.shadeP, this.causticP, this.crystalP, this.formP]) {
             gl.useProgram(p);
             gl.uniform1i(gl.getUniformLocation(p, "uWall"), 0);
             gl.uniform1i(gl.getUniformLocation(p, "uMask"), 1);
@@ -639,9 +639,16 @@ export class Pendulum {
         this.eye[1] = r[3] * ex + r[4] * ey + r[5] * ez;
         this.eye[2] = r[6] * ex + r[7] * ey + r[8] * ez;
         this.see(dt);
-        this.beams.count = 0;
-        this.glintN = 0;
+        if (this.shapeName === "diamond") {
+            this.beams.trace(this.ax, this.az, this.twist, this.at, dt);
+            const bd = this.beams.data;
+            for (let i = 0; i < this.beams.count; i++) bd[i * STRIDE + 5] *= this.seen;
+        } else {
+            this.beams.count = 0;
+            this.glintN = 0;
+        }
         this.thread(py);
+        if (this.shapeName === "diamond") this.sparkle();
         return moving;
     }
     // GLINTS
@@ -865,6 +872,26 @@ export class Pendulum {
         gl.useProgram(this.blitP);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         gl.enable(gl.BLEND);
+        const quartz = this.shapeName === "diamond";
+        if (quartz) {
+            gl.useProgram(this.causticP);
+            gl.uniformMatrix4fv(u.kVP, false, this.vp);
+            gl.uniformMatrix3fv(u.kRot, false, this.rot);
+            gl.uniform3fv(u.kPos, this.at);
+            const px = (2 * this.half[1]) / this.canvas.height;
+            gl.uniform1f(u.kPx, px * px);
+            gl.bindVertexArray(this.crystalVao);
+            gl.drawArraysInstanced(gl.TRIANGLES, 0, this.c.tris * 3, 3);
+            const n = this.beams.count;
+            const d = this.beams.data;
+            this.sparks(d, n * STRIDE);
+            gl.useProgram(this.spotP);
+            gl.uniformMatrix4fv(u.pVP, false, this.vp);
+            gl.bindVertexArray(this.spotVao);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.spotBuf);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 0, d, 0, (n + DOTS) * STRIDE);
+            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n + DOTS);
+        }
         // SHADOW
         // scissored to the box the shadow can reach
         gl.useProgram(this.shadeP);
@@ -877,7 +904,17 @@ export class Pendulum {
         gl.useProgram(this.lineP);
         gl.bindVertexArray(this.lineVao);
         gl.drawArrays(gl.TRIANGLES, SHADOW_QUADS * 6, (LINE_QUADS - SHADOW_QUADS) * 6);
-        if (formReady) {
+        if (quartz) {
+            gl.enable(gl.CULL_FACE);
+            gl.useProgram(this.crystalP);
+            gl.uniformMatrix4fv(u.cVP, false, this.vp);
+            gl.uniformMatrix3fv(u.cRot, false, this.rot);
+            gl.uniform3fv(u.cPos, this.at);
+            gl.uniform3fv(u.cEye, this.eye);
+            gl.uniform2fv(u.cHalf, this.half);
+            gl.bindVertexArray(this.crystalVao);
+            gl.drawArrays(gl.TRIANGLES, 0, this.c.tris * 3);
+        } else if (formReady) {
             gl.disable(gl.CULL_FACE);
             gl.enable(gl.DEPTH_TEST);
             gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -886,7 +923,8 @@ export class Pendulum {
             gl.uniformMatrix3fv(u.fRot, false, this.rot);
             gl.uniform3fv(u.fPos, this.at);
             gl.uniform3f(u.fEye, 0, 0, this.dist);
-            gl.uniform1i(u.fSurface, FORM_SURFACE);
+            gl.uniform2fv(u.fHalf, this.half);
+            gl.uniform1f(u.fThickness, Math.min(0.58, this.formRadius * 1.55));
             gl.uniform1f(u.fTime, this.t);
             gl.bindVertexArray(this.formVao);
             gl.drawArrays(gl.TRIANGLES, 0, this.formCount);
