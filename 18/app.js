@@ -42,7 +42,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 pmrem.dispose();
 
 const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 140);
-const cameraTarget = new THREE.Vector3(0, 0.72, 0);
+const cameraTarget = new THREE.Vector3(0, -1.7, 0);
 let cameraRadius = 18;
 let cameraAzimuth = 0.42;
 let cameraPolar = 1.34;
@@ -1018,8 +1018,8 @@ function resize() {
   camera.aspect = aspect;
   camera.fov = 30;
   const fovHalf = THREE.MathUtils.degToRad(camera.fov / 2);
-  const neededHeight = 8.35;
-  const neededWidth = 5.9;
+  const neededHeight = 13.2;
+  const neededWidth = 8.2;
   const radiusForHeight = neededHeight / (2 * Math.tan(fovHalf));
   const radiusForWidth = neededWidth / (2 * Math.tan(fovHalf) * aspect);
   cameraRadius = Math.max(radiusForHeight, radiusForWidth) * 1.08;
