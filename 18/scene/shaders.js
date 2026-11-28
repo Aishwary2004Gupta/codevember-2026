@@ -74,9 +74,14 @@ void main() {
   float skim = fbm(vec2(p.x * 7.0 - p.y * 3.0, p.y * 2.2) + 11.0);
   float grain = noise(p * 260.0) * 0.6 + noise(p * 90.0) * 0.4;
   float tex = (blot - 0.5) * 0.05 + (skim - 0.5) * 0.035 + (grain - 0.5) * 0.03;
-  vec3 shade = vec3(0.805, 0.8, 0.795);
-  vec3 sun = vec3(0.985, 0.95, 0.885);
+  vec2 poolP = (p - vec2(0.82, 0.72)) * vec2(0.78, 1.08);
+  float pool = exp(-dot(poolP, poolP) * 1.25);
+  float vignette = smoothstep(1.7, 3.15, length(p * vec2(0.82, 0.92)));
+  vec3 shade = vec3(0.79, 0.79, 0.79);
+  vec3 sun = vec3(0.99, 0.952, 0.885);
   vec3 c = mix(shade, sun, lit) * (1.0 + tex * (1.0 + 1.6 * lit));
+  c += vec3(0.065, 0.046, 0.026) * pool * (0.3 + lit * 0.7);
+  c *= 1.0 - vignette * 0.055;
   o = vec4(c, lit);
 }`;
 // BLIT
@@ -550,9 +555,7 @@ void main() {
   o = vec4(col, 1.0);
 }`;
 
-// A lit, tactile surface shader for the alternate forms. The glass diamond
-// keeps the original ray-traced quartz shader; these finishes make the OBJ
-// skull, duck, hand, astronaut, and torus feel like solid crafted materials.
+// Older surface study kept for reference; active forms use FORM_GLASS_FS.
 export const FORM_VS = `${HEAD}
 uniform mat4 uVP;
 uniform mat3 uRot;
@@ -593,8 +596,16 @@ float noise3(vec3 p) {
     mix(mix(hash3(i + vec3(0, 0, 1)), hash3(i + vec3(1, 0, 1)), f.x),
       mix(hash3(i + vec3(0, 1, 1)), hash3(i + vec3(1, 1, 1)), f.x), f.y), f.z);
 }
+float sheet(vec3 p, vec3 dir, float k, float w) {
+  float x = dot(p, dir) * k + (noise3(p * 18.0) - 0.5) * 1.6;
+  float line = 1.0 - smoothstep(0.0, w, abs(fract(x) - 0.5));
+  return line * smoothstep(0.45, 0.7, noise3(p * 11.0 + dir * 5.0));
+}
 void main() {
-  vec3 n = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 smoothN = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 facetN = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+  if (dot(facetN, smoothN) < 0.0) facetN = -facetN;
+  vec3 n = normalize(mix(smoothN, facetN, 0.48));
   vec3 viewDir = normalize(uEye - vWorld);
   vec3 lightDir = normalize(-SUN);
   float ndl = max(dot(n, lightDir), 0.0);
@@ -697,8 +708,16 @@ vec3 env(vec3 p, vec3 d, float blur) {
   vec2 wall = p.xy + d.xy * (-p.z / min(d.z, -1e-3));
   return textureLod(uWall, clamp(wall / uHalf * 0.5 + 0.5, 0.0, 1.0), blur).rgb;
 }
+float sheet(vec3 p, vec3 dir, float k, float w) {
+  float x = dot(p, dir) * k + (noise3(p * 18.0) - 0.5) * 1.6;
+  float line = 1.0 - smoothstep(0.0, w, abs(fract(x) - 0.5));
+  return line * smoothstep(0.45, 0.7, noise3(p * 11.0 + dir * 5.0));
+}
 void main() {
-  vec3 n = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 smoothN = normalize(gl_FrontFacing ? vNormal : -vNormal);
+  vec3 facetN = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
+  if (dot(facetN, smoothN) < 0.0) facetN = -facetN;
+  vec3 n = normalize(mix(smoothN, facetN, 0.48));
   vec3 incident = normalize(vWorld - uEye);
   float cosine = clamp(-dot(incident, n), 0.0, 1.0);
   float fresnel = 0.045 + 0.955 * pow(1.0 - cosine, 5.0);
@@ -706,9 +725,11 @@ void main() {
   float cloud = smoothstep(0.48, 0.82, noise3(vLocal * 19.0 + vec3(0.0, uTime * 0.003, 0.0)));
   float veinNoise = noise3(vLocal * 47.0 + vec3(4.0, 0.0, uTime * 0.002));
   float vein = smoothstep(0.78, 0.94, veinNoise) * (1.0 - smoothstep(0.94, 0.985, grain));
-  float thickness = uThickness * (0.72 + 0.68 * (1.0 - cosine));
-  float blur = 0.4 + grain * 0.65;
-  vec3 ior = vec3(1.516, 1.522, 1.531);
+  float fracture = sheet(vLocal, vec3(0.6, 0.55, 0.58), 9.0, 0.17)
+    + sheet(vLocal, vec3(-0.7, 0.3, 0.65), 7.0, 0.14);
+  float thickness = uThickness * (0.94 + 0.96 * (1.0 - cosine));
+  float blur = 0.16 + grain * 0.48;
+  vec3 ior = vec3(1.482, 1.522, 1.574);
   vec3 rayR = refract(incident, n, 1.0 / ior.r);
   vec3 rayG = refract(incident, n, 1.0 / ior.g);
   vec3 rayB = refract(incident, n, 1.0 / ior.b);
@@ -717,12 +738,18 @@ void main() {
   through.g = dot(rayG, rayG) > 0.0 ? env(vWorld + rayG * thickness, rayG, blur).g : env(vWorld, reflect(incident, n), blur).g;
   through.b = dot(rayB, rayB) > 0.0 ? env(vWorld + rayB * thickness, rayB, blur).b : env(vWorld, reflect(incident, n), blur).b;
   vec3 reflected = env(vWorld, reflect(incident, n), 0.0);
-  vec3 color = mix(through * 0.82, reflected, clamp(0.12 + fresnel * 0.9, 0.0, 1.0));
-  float sunGlint = pow(max(dot(reflect(incident, n), -SUN), 0.0), 92.0);
+  vec3 color = mix(through * 0.78, reflected, clamp(0.16 + fresnel * 0.86, 0.0, 1.0));
+  float edgeGlow = pow(1.0 - cosine, 1.8);
+  vec3 spectrum = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + fresnel * 1.25 + grain * 0.13));
+  vec3 crystalTint = mix(vec3(0.94, 0.96, 0.98), spectrum * 1.12, 0.44);
+  float reflectedSun = max(dot(reflect(incident, n), -SUN), 0.0);
+  float sunGlint = pow(reflectedSun, 68.0);
+  float sunCore = pow(reflectedSun, 170.0);
   float facet = clamp(length(fwidth(n)) * 3.2, 0.0, 1.0);
-  color = mix(color, vec3(0.96, 0.98, 1.0), cloud * 0.18 + vein * 0.34);
-  color += vec3(0.78, 0.88, 1.0) * sunGlint * 1.1;
-  color += vec3(0.68, 0.77, 0.84) * (pow(1.0 - cosine, 8.0) * 0.2 + facet * 0.07);
+  color = mix(color, crystalTint, edgeGlow * 0.24);
+  color = mix(color, vec3(0.96, 0.98, 1.0), cloud * 0.2 + vein * 0.38 + min(fracture, 1.0) * 0.32);
+  color += vec3(0.9, 0.95, 1.0) * sunGlint * 0.48 + vec3(1.0, 0.985, 0.93) * sunCore * 1.25;
+  color += vec3(0.68, 0.77, 0.84) * (pow(1.0 - cosine, 8.0) * 0.24 + facet * 0.12);
   color = color / (1.0 + 0.12 * max(color - 0.85, 0.0));
   o = vec4(color, 1.0);
 }`;

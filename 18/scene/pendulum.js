@@ -1,9 +1,9 @@
 import { Beams, STRIDE } from "./beams.js";
 import { crystal } from "./crystal.js";
-import { diamondMesh, donutMesh, parseOBJ, sphereMesh } from "./forms.js?v=glass-grab-11";
+import { diamondMesh, donutMesh, parseOBJ, sphereMesh } from "./forms.js?v=glass-grab-14";
 import { Follow, Osc, orient } from "./motion.js";
 import { SCENE, SUN, sunlit } from "./scene.js";
-import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_GLASS_FS } from "./shaders.js?v=glass-grab-11";
+import { BLIT_FS, CRYSTAL_VS, FULL_VS, LINE_FS, LINE_VS, SHADE_FS, SHADOW_FS, SHADOW_VS, CAUSTIC_FS, causticVs, SPOT_FS, SPOT_VS, GLINT_FS, GLINT_VS, WALL_FS, crystalFs, FORM_VS, FORM_GLASS_FS } from "./shaders.js?v=glass-grab-14";
 const MAX_DPR = 2;
 const MAX_DT_S = 1 / 20;
 const PERIOD_S = 2.8; // change swing period here
@@ -22,7 +22,7 @@ const MAX_TWIST_RAD = 4;
 const FOLLOW_W = 16;
 const TWIST_KICK = 0.25;
 const RELEASE_TWIST_LIMIT = 2.4;
-const LINK_M = 0.011;
+const LINK_M = 0.013;
 const DOTS = 7;
 const SETTLE = 1e-4;
 const BOUNCES = 3;
@@ -639,14 +639,10 @@ export class Pendulum {
         this.eye[1] = r[3] * ex + r[4] * ey + r[5] * ez;
         this.eye[2] = r[6] * ex + r[7] * ey + r[8] * ez;
         this.see(dt);
-        if (this.shapeName === "diamond") {
-            this.beams.trace(this.ax, this.az, this.twist, this.at, dt);
-            const bd = this.beams.data;
-            for (let i = 0; i < this.beams.count; i++) bd[i * STRIDE + 5] *= this.seen;
-        } else {
-            this.beams.count = 0;
-            this.glintN = 0;
-        }
+        this.beams.trace(this.ax, this.az, this.twist, this.at, dt);
+        const bd = this.beams.data;
+        for (let i = 0; i < this.beams.count; i++) bd[i * STRIDE + 5] *= this.seen;
+        if (this.shapeName !== "diamond") this.glintN = 0;
         this.thread(py);
         if (this.shapeName === "diamond") this.sparkle();
         return moving;
@@ -773,8 +769,8 @@ export class Pendulum {
         const ty = at[1] + r[4] * hiddenY;
         const tz = at[2] + r[5] * hiddenY;
         const len = Math.hypot(tx, ty - py, tz - SCENE.crystalZ);
-        this.cast(0, 0, py, SCENE.crystalZ, tx, ty, tz, 1.0 * dpr, len);
-        const q = this.quad(SHADOW_QUADS, 0, py, SCENE.crystalZ, tx, ty, tz, 0.85 * dpr, 0, len, 2);
+        this.cast(0, 0, py, SCENE.crystalZ, tx, ty, tz, 1.25 * dpr, len);
+        const q = this.quad(SHADOW_QUADS, 0, py, SCENE.crystalZ, tx, ty, tz, 1.2 * dpr, 0, len, 2);
         this.paint(q - 1, INK.chain);
     }
     // CAST
@@ -882,16 +878,16 @@ export class Pendulum {
             gl.uniform1f(u.kPx, px * px);
             gl.bindVertexArray(this.crystalVao);
             gl.drawArraysInstanced(gl.TRIANGLES, 0, this.c.tris * 3, 3);
-            const n = this.beams.count;
-            const d = this.beams.data;
-            this.sparks(d, n * STRIDE);
-            gl.useProgram(this.spotP);
-            gl.uniformMatrix4fv(u.pVP, false, this.vp);
-            gl.bindVertexArray(this.spotVao);
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.spotBuf);
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, d, 0, (n + DOTS) * STRIDE);
-            gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n + DOTS);
         }
+        const n = this.beams.count;
+        const d = this.beams.data;
+        this.sparks(d, n * STRIDE);
+        gl.useProgram(this.spotP);
+        gl.uniformMatrix4fv(u.pVP, false, this.vp);
+        gl.bindVertexArray(this.spotVao);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.spotBuf);
+        gl.bufferSubData(gl.ARRAY_BUFFER, 0, d, 0, (n + DOTS) * STRIDE);
+        gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, n + DOTS);
         // SHADOW
         // scissored to the box the shadow can reach
         gl.useProgram(this.shadeP);
